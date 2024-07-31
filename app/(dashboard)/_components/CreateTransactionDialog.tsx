@@ -180,7 +180,7 @@ function CreateTransactionDialog({ trigger, type }: Props) {
                 name="date"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Transaction date</FormLabel>
+                    <FormLabel>Transaction Date</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
