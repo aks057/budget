@@ -1,13 +1,10 @@
-import prisma from "@/lib/prisma";
+import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/supabase/auth";
 import { OverviewQuerySchema } from "@/schema/overview";
-import { currentUser } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
 
 export async function GET(request: Request) {
-  const user = await currentUser();
-  if (!user) {
-    redirect("/sign-in");
-  }
+  const user = await requireUser();
+  const supabase = await createClient();
 
   const { searchParams } = new URL(request.url);
   const from = searchParams.get("from");
@@ -21,36 +18,31 @@ export async function GET(request: Request) {
     });
   }
 
-  const stats = await getBalanceStats(
-    user.id,
-    queryParams.data.from,
-    queryParams.data.to
+  const { data: transactions, error } = await supabase
+    .from("transactions")
+    .select("type, amount")
+    .eq("user_id", user.id)
+    .gte("date", queryParams.data.from.toISOString())
+    .lte("date", queryParams.data.to.toISOString());
+
+  if (error) {
+    return Response.json({ error: error.message }, { status: 500 });
+  }
+
+  // Aggregate in JavaScript (Supabase doesn't support groupBy like Prisma)
+  const totals = (transactions || []).reduce(
+    (acc, t) => {
+      if (t.type === "expense") acc.expense += t.amount;
+      if (t.type === "income") acc.income += t.amount;
+      return acc;
+    },
+    { expense: 0, income: 0 }
   );
 
-  return Response.json(stats);
+  return Response.json(totals);
 }
 
-export type GetBalanceStatsResponseType = Awaited<
-  ReturnType<typeof getBalanceStats>
->;
-
-async function getBalanceStats(userId: string, from: Date, to: Date) {
-  const totals = await prisma.transaction.groupBy({
-    by: ["type"],
-    where: {
-      userId,
-      date: {
-        gte: from,
-        lte: to,
-      },
-    },
-    _sum: {
-      amount: true,
-    },
-  });
-
-  return {
-    expense: totals.find((t) => t.type === "expense")?._sum.amount || 0,
-    income: totals.find((t) => t.type === "income")?._sum.amount || 0,
-  };
-}
+export type GetBalanceStatsResponseType = {
+  expense: number;
+  income: number;
+};

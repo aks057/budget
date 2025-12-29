@@ -1,12 +1,11 @@
 "use server";
 
-import prisma from "@/lib/prisma";
+import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/supabase/auth";
 import {
   CreateTransactionSchema,
   CreateTransactionSchemaType,
 } from "@/schema/transaction";
-import { currentUser } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
 
 export async function CreateTransaction(form: CreateTransactionSchemaType) {
   const parsedBody = CreateTransactionSchema.safeParse(form);
@@ -14,91 +13,37 @@ export async function CreateTransaction(form: CreateTransactionSchemaType) {
     throw new Error(parsedBody.error.message);
   }
 
-  const user = await currentUser();
-  if (!user) {
-    redirect("/sign-in");
-  }
+  const user = await requireUser();
+  const supabase = await createClient();
 
   const { amount, category, date, description, type } = parsedBody.data;
-  const categoryRow = await prisma.category.findFirst({
-    where: {
-      userId: user.id,
-      name: category,
-    },
-  });
 
-  if (!categoryRow) {
+  // Get category to verify it exists and get icon
+  const { data: categoryRow, error: categoryError } = await supabase
+    .from("categories")
+    .select("*")
+    .eq("user_id", user.id)
+    .eq("name", category)
+    .single();
+
+  if (categoryError || !categoryRow) {
     throw new Error("category not found");
   }
 
-  // NOTE: don't make confusion between $transaction ( prisma ) and prisma.transaction (table)
+  // Call the atomic function
+  const { data, error } = await supabase.rpc("create_transaction_with_history", {
+    p_user_id: user.id,
+    p_amount: amount,
+    p_description: description || "",
+    p_date: date.toISOString(),
+    p_type: type,
+    p_category: categoryRow.name,
+    p_category_icon: categoryRow.icon,
+  });
 
-  await prisma.$transaction([
-    // Create user transaction
-    prisma.transaction.create({
-      data: {
-        userId: user.id,
-        amount,
-        date,
-        description: description || "",
-        type,
-        category: categoryRow.name,
-        categoryIcon: categoryRow.icon,
-      },
-    }),
+  if (error) {
+    throw new Error(error.message);
+  }
 
-    // Update month aggregate table
-    prisma.monthHistory.upsert({
-      where: {
-        day_month_year_userId: {
-          userId: user.id,
-          day: date.getUTCDate(),
-          month: date.getUTCMonth(),
-          year: date.getUTCFullYear(),
-        },
-      },
-      create: {
-        userId: user.id,
-        day: date.getUTCDate(),
-        month: date.getUTCMonth(),
-        year: date.getUTCFullYear(),
-        expense: type === "expense" ? amount : 0,
-        income: type === "income" ? amount : 0,
-      },
-      update: {
-        expense: {
-          increment: type === "expense" ? amount : 0,
-        },
-        income: {
-          increment: type === "income" ? amount : 0,
-        },
-      },
-    }),
-
-    // Update year aggreate
-    prisma.yearHistory.upsert({
-      where: {
-        month_year_userId: {
-          userId: user.id,
-          month: date.getUTCMonth(),
-          year: date.getUTCFullYear(),
-        },
-      },
-      create: {
-        userId: user.id,
-        month: date.getUTCMonth(),
-        year: date.getUTCFullYear(),
-        expense: type === "expense" ? amount : 0,
-        income: type === "income" ? amount : 0,
-      },
-      update: {
-        expense: {
-          increment: type === "expense" ? amount : 0,
-        },
-        income: {
-          increment: type === "income" ? amount : 0,
-        },
-      },
-    }),
-  ]);
+  return data;
 }

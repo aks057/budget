@@ -1,11 +1,17 @@
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import React, { ReactNode } from "react";
 
 function layout({ children }: { children: ReactNode }) {
   return (
-    <div className="relative flex h-screen w-full flex-col">
+    <div className="relative flex min-h-screen w-full flex-col">
       <Navbar />
-      <div className="w-full">{children}</div>
+      <Breadcrumbs />
+      <main id="main-content" className="flex-1">
+        {children}
+      </main>
+      <Footer />
     </div>
   );
 }

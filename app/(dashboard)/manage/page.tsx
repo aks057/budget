@@ -15,7 +15,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { TransactionType } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { Category } from "@prisma/client";
+import { Category } from "@/lib/supabase/database.types";
 import { useQuery } from "@tanstack/react-query";
 import { PlusSquare, TrashIcon, TrendingDown, TrendingUp } from "lucide-react";
 import React from "react";

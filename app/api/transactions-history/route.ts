@@ -1,14 +1,12 @@
 import { GetFormatterForCurrency } from "@/lib/helpers";
-import prisma from "@/lib/prisma";
+import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/supabase/auth";
 import { OverviewQuerySchema } from "@/schema/overview";
-import { currentUser } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
+import { Transaction } from "@/lib/supabase/database.types";
 
 export async function GET(request: Request) {
-  const user = await currentUser();
-  if (!user) {
-    redirect("/sign-in");
-  }
+  const user = await requireUser();
+  const supabase = await createClient();
 
   const { searchParams } = new URL(request.url);
   const from = searchParams.get("from");
@@ -25,47 +23,40 @@ export async function GET(request: Request) {
     });
   }
 
-  const transactions = await getTransactionsHistory(
-    user.id,
-    queryParams.data.from,
-    queryParams.data.to
-  );
+  // Get user settings for currency formatting
+  const { data: userSettings, error: settingsError } = await supabase
+    .from("user_settings")
+    .select("currency")
+    .eq("user_id", user.id)
+    .single();
 
-  return Response.json(transactions);
-}
-
-export type GetTransactionHistoryResponseType = Awaited<
-  ReturnType<typeof getTransactionsHistory>
->;
-
-async function getTransactionsHistory(userId: string, from: Date, to: Date) {
-  const userSettings = await prisma.userSettings.findUnique({
-    where: {
-      userId,
-    },
-  });
-  if (!userSettings) {
+  if (settingsError || !userSettings) {
     throw new Error("user settings not found");
   }
 
   const formatter = GetFormatterForCurrency(userSettings.currency);
 
-  const transactions = await prisma.transaction.findMany({
-    where: {
-      userId,
-      date: {
-        gte: from,
-        lte: to,
-      },
-    },
-    orderBy: {
-      date: "desc",
-    },
-  });
+  // Get transactions
+  const { data: transactions, error } = await supabase
+    .from("transactions")
+    .select("*")
+    .eq("user_id", user.id)
+    .gte("date", queryParams.data.from.toISOString())
+    .lte("date", queryParams.data.to.toISOString())
+    .order("date", { ascending: false });
 
-  return transactions.map((transaction) => ({
-    ...transaction,
-    // lets format the amount with the user currency
-    formattedAmount: formatter.format(transaction.amount),
-  }));
+  if (error) {
+    return Response.json({ error: error.message }, { status: 500 });
+  }
+
+  return Response.json(
+    (transactions || []).map((transaction) => ({
+      ...transaction,
+      formattedAmount: formatter.format(transaction.amount),
+    }))
+  );
 }
+
+export type GetTransactionHistoryResponseType = (Transaction & {
+  formattedAmount: string;
+})[];

@@ -1,28 +1,35 @@
-import prisma from "@/lib/prisma";
-import { currentUser } from "@clerk/nextjs/server";
+import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/supabase/auth";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 export async function GET(request: Request) {
-  const user = await currentUser();
+  const user = await requireUser();
+  const supabase = await createClient();
 
-  if (!user) {
-    redirect("/sign-in");
-  }
+  let { data: userSettings, error } = await supabase
+    .from("user_settings")
+    .select("*")
+    .eq("user_id", user.id)
+    .single();
 
-  let userSettings = await prisma.userSettings.findUnique({
-    where: {
-      userId: user.id,
-    },
-  });
-
-  if (!userSettings) {
-    userSettings = await prisma.userSettings.create({
-      data: {
-        userId: user.id,
+  if (error && error.code === "PGRST116") {
+    // No rows found, create default settings
+    const { data: newSettings, error: createError } = await supabase
+      .from("user_settings")
+      .insert({
+        user_id: user.id,
         currency: "INR",
-      },
-    });
+      })
+      .select()
+      .single();
+
+    if (createError) {
+      return Response.json({ error: createError.message }, { status: 500 });
+    }
+
+    userSettings = newSettings;
+  } else if (error) {
+    return Response.json({ error: error.message }, { status: 500 });
   }
 
   // Revalidate the home page that uses the user currency

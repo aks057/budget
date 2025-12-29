@@ -4,8 +4,9 @@ import CategoriesStats from "@/app/(dashboard)/_components/CategoriesStats";
 import StatsCards from "@/app/(dashboard)/_components/StatsCards";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { MAX_DATE_RANGE_DAYS } from "@/lib/constants";
-import { UserSettings } from "@prisma/client";
+import { UserSettings } from "@/lib/supabase/database.types";
 import { differenceInDays, startOfMonth } from "date-fns";
+import { CalendarDays } from "lucide-react";
 import React, { useState } from "react";
 import { toast } from "sonner";
 
@@ -17,8 +18,13 @@ function Overview({ userSettings }: { userSettings: UserSettings }) {
 
   return (
     <>
-      <div className="container flex flex-wrap items-end justify-between gap-2 py-6">
-        <h2 className="text-3xl font-bold">Overview</h2>
+      <div className="container flex flex-wrap items-end justify-between gap-4 py-6">
+        <div>
+          <h2 className="text-2xl font-bold">Overview</h2>
+          <p className="text-sm text-muted-foreground">
+            Track your income, expenses, and spending categories
+          </p>
+        </div>
         <div className="flex items-center gap-3">
           <DateRangePicker
             initialDateFrom={dateRange.from}
@@ -41,7 +47,7 @@ function Overview({ userSettings }: { userSettings: UserSettings }) {
           />
         </div>
       </div>
-      <div className="container flex w-full flex-col gap-2">
+      <div className="container flex w-full flex-col gap-6">
         <StatsCards
           userSettings={userSettings}
           from={dateRange.from}

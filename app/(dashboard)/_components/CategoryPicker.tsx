@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/popover";
 import { TransactionType } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { Category } from "@prisma/client";
+import { Category } from "@/lib/supabase/database.types";
 import { useQuery } from "@tanstack/react-query";
 import { Check, ChevronsUpDown } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";

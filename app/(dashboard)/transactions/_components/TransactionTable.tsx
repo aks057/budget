@@ -63,7 +63,7 @@ const columns: ColumnDef<TransactionHistoryRow>[] = [
     },
     cell: ({ row }) => (
       <div className="flex gap-2 capitalize">
-        {row.original.categoryIcon}
+        {row.original.category_icon}
         <div className="capitalize">{row.original.category}</div>
       </div>
     ),
@@ -175,7 +175,7 @@ function TransactionTable({ from, to }: Props) {
     history.data?.forEach((transaction) => {
       categoriesMap.set(transaction.category, {
         value: transaction.category,
-        label: `${transaction.categoryIcon} ${transaction.category}`,
+        label: `${transaction.category_icon} ${transaction.category}`,
       });
     });
     const uniqueCategories = new Set(categoriesMap.values());
@@ -212,7 +212,7 @@ function TransactionTable({ from, to }: Props) {
             onClick={() => {
               const data = table.getFilteredRowModel().rows.map((row) => ({
                 category: row.original.category,
-                categoryIcon: row.original.categoryIcon,
+                category_icon: row.original.category_icon,
                 description: row.original.description,
                 type: row.original.type,
                 amount: row.original.amount,

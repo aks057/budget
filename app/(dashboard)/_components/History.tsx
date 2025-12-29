@@ -7,8 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GetFormatterForCurrency } from "@/lib/helpers";
 import { Period, Timeframe } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { UserSettings } from "@prisma/client";
+import { UserSettings } from "@/lib/supabase/database.types";
 import { useQuery } from "@tanstack/react-query";
+import { BarChart3, TrendingUp } from "lucide-react";
 import React, { useCallback, useMemo, useState } from "react";
 import CountUp from "react-countup";
 import {
@@ -44,9 +45,14 @@ function History({ userSettings }: { userSettings: UserSettings }) {
     historyDataQuery.data && historyDataQuery.data.length > 0;
 
   return (
-    <div className="container">
-      <h2 className="mt-12 text-3xl font-bold">History</h2>
-      <Card className="col-span-12 mt-2 w-full">
+    <div className="container pb-10">
+      <div className="mb-4">
+        <h2 className="text-2xl font-bold">History</h2>
+        <p className="text-sm text-muted-foreground">
+          Visualize your financial activity over time
+        </p>
+      </div>
+      <Card className="col-span-12 w-full">
         <CardHeader className="gap-2">
           <CardTitle className="grid grid-flow-row justify-between gap-2 md:grid-flow-col">
             <HistoryPeriodSelector
@@ -164,12 +170,13 @@ function History({ userSettings }: { userSettings: UserSettings }) {
               </ResponsiveContainer>
             )}
             {!dataAvailable && (
-              <Card className="flex h-[300px] flex-col items-center justify-center bg-background">
-                No data for the selected period
+              <div className="flex h-[300px] flex-col items-center justify-center rounded-lg border border-dashed">
+                <BarChart3 className="h-12 w-12 text-muted-foreground/50" />
+                <p className="mt-4 text-lg font-medium">No data available</p>
                 <p className="text-sm text-muted-foreground">
-                  Try selecting a different period or adding new transactions
+                  Try selecting a different period or add some transactions
                 </p>
-              </Card>
+              </div>
             )}
           </SkeletonWrapper>
         </CardContent>

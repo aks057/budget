@@ -4,7 +4,8 @@ import { GetBalanceStatsResponseType } from "@/app/api/stats/balance/route";
 import SkeletonWrapper from "@/components/SkeletonWrapper";
 import { Card } from "@/components/ui/card";
 import { DateToUTCDate, GetFormatterForCurrency } from "@/lib/helpers";
-import { UserSettings } from "@prisma/client";
+import { UserSettings } from "@/lib/supabase/database.types";
+import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import React, { ReactNode, useCallback, useMemo } from "react";
@@ -35,15 +36,18 @@ function StatsCards({ from, to, userSettings }: Props) {
   const balance = income - expense;
 
   return (
-    <div className="relative flex w-full flex-wrap gap-2 md:flex-nowrap">
+    <div className="relative flex w-full flex-wrap gap-4 md:flex-nowrap">
       <SkeletonWrapper isLoading={statsQuery.isFetching}>
         <StatCard
           formatter={formatter}
           value={income}
           title="Income"
+          description="Total earnings"
           icon={
-            <TrendingUp className="h-12 w-12 items-center rounded-lg p-2 text-emerald-500 bg-emerald-400/10" />
+            <TrendingUp className="h-5 w-5 text-emerald-500" />
           }
+          iconBg="bg-emerald-500/10"
+          valueColor="text-emerald-500"
         />
       </SkeletonWrapper>
 
@@ -52,9 +56,12 @@ function StatsCards({ from, to, userSettings }: Props) {
           formatter={formatter}
           value={expense}
           title="Expense"
+          description="Total spending"
           icon={
-            <TrendingDown className="h-12 w-12 items-center rounded-lg p-2 text-red-500 bg-red-400/10" />
+            <TrendingDown className="h-5 w-5 text-red-500" />
           }
+          iconBg="bg-red-500/10"
+          valueColor="text-red-500"
         />
       </SkeletonWrapper>
 
@@ -63,9 +70,12 @@ function StatsCards({ from, to, userSettings }: Props) {
           formatter={formatter}
           value={balance}
           title="Balance"
+          description="Net savings"
           icon={
-            <Wallet className="h-12 w-12 items-center rounded-lg p-2 text-violet-500 bg-violet-400/10" />
+            <Wallet className="h-5 w-5 text-amber-500" />
           }
+          iconBg="bg-amber-500/10"
+          valueColor={balance >= 0 ? "text-emerald-500" : "text-red-500"}
         />
       </SkeletonWrapper>
     </div>
@@ -78,12 +88,18 @@ function StatCard({
   formatter,
   value,
   title,
+  description,
   icon,
+  iconBg,
+  valueColor,
 }: {
   formatter: Intl.NumberFormat;
   icon: ReactNode;
-  title: String;
+  iconBg: string;
+  title: string;
+  description: string;
   value: number;
+  valueColor?: string;
 }) {
   const formatFn = useCallback(
     (value: number) => {
@@ -93,18 +109,23 @@ function StatCard({
   );
 
   return (
-    <Card className="flex h-24 w-full items-center gap-2 p-4">
-      {icon}
-      <div className="flex flex-col items-start gap-0">
-        <p className="text-muted-foreground">{title}</p>
+    <Card className="flex h-auto w-full flex-col gap-4 p-6 transition-all hover:shadow-lg hover:shadow-black/5 dark:hover:shadow-white/5">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-medium text-muted-foreground">{title}</p>
+        <div className={cn("rounded-lg p-2", iconBg)}>
+          {icon}
+        </div>
+      </div>
+      <div className="flex flex-col gap-1">
         <CountUp
           preserveValue
           redraw={false}
           end={value}
           decimals={2}
           formattingFn={formatFn}
-          className="text-2xl"
+          className={cn("text-2xl font-bold", valueColor)}
         />
+        <p className="text-xs text-muted-foreground">{description}</p>
       </div>
     </Card>
   );

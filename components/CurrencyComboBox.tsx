@@ -21,7 +21,7 @@ import {
 import { Currencies, Currency } from "@/lib/currencies";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import SkeletonWrapper from "@/components/SkeletonWrapper";
-import { UserSettings } from "@prisma/client";
+import { UserSettings } from "@/lib/supabase/database.types";
 import { UpdateUserCurrency } from "@/app/wizard/_actions/userSettings";
 import { toast } from "sonner";
 

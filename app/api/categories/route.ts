@@ -1,13 +1,10 @@
-import prisma from "@/lib/prisma";
-import { currentUser } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/supabase/auth";
 import { z } from "zod";
 
 export async function GET(request: Request) {
-  const user = await currentUser();
-  if (!user) {
-    redirect("/sign-in");
-  }
+  const user = await requireUser();
+  const supabase = await createClient();
 
   const { searchParams } = new URL(request.url);
   const paramType = searchParams.get("type");
@@ -22,15 +19,22 @@ export async function GET(request: Request) {
   }
 
   const type = queryParams.data;
-  const categories = await prisma.category.findMany({
-    where: {
-      userId: user.id,
-      ...(type && { type }), // include type in the filters if it's defined
-    },
-    orderBy: {
-      name: "asc",
-    },
-  });
+
+  let query = supabase
+    .from("categories")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("name", { ascending: true });
+
+  if (type) {
+    query = query.eq("type", type);
+  }
+
+  const { data: categories, error } = await query;
+
+  if (error) {
+    return Response.json({ error: error.message }, { status: 500 });
+  }
 
   return Response.json(categories);
 }

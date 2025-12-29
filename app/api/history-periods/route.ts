@@ -1,42 +1,28 @@
-import prisma from "@/lib/prisma";
-import { currentUser } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/supabase/auth";
 
 export async function GET(request: Request) {
-  const user = await currentUser();
-  if (!user) {
-    redirect("/sign-in");
+  const user = await requireUser();
+  const supabase = await createClient();
+
+  const { data: result, error } = await supabase
+    .from("month_history")
+    .select("year")
+    .eq("user_id", user.id)
+    .order("year", { ascending: true });
+
+  if (error) {
+    return Response.json({ error: error.message }, { status: 500 });
   }
 
-  const periods = await getHistoryPeriods(user.id);
-  return Response.json(periods);
-}
+  // Get distinct years
+  const years = [...new Set(result?.map((el) => el.year) || [])];
 
-export type GetHistoryPeriodsResponseType = Awaited<
-  ReturnType<typeof getHistoryPeriods>
->;
-
-async function getHistoryPeriods(userId: string) {
-  const result = await prisma.monthHistory.findMany({
-    where: {
-      userId,
-    },
-    select: {
-      year: true,
-    },
-    distinct: ["year"],
-    orderBy: [
-      {
-        year: "asc",
-      },
-    ],
-  });
-
-  const years = result.map((el) => el.year);
   if (years.length === 0) {
-    // Return the current year
-    return [new Date().getFullYear()];
+    return Response.json([new Date().getFullYear()]);
   }
 
-  return years;
+  return Response.json(years);
 }
+
+export type GetHistoryPeriodsResponseType = number[];

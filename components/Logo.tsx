@@ -14,10 +14,11 @@ function Logo() {
 
 export function LogoMobile() {
   return (
-    <a href="/" className="flex items-center gap-2">
-      <p className="bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-3xl font-bold leading-tight tracking-tighter text-transparent">
-      BudWiser
-      </p>
+    <a href="/" className="flex items-center gap-1.5">
+      <PiggyBank className="h-7 w-7 stroke-brand stroke-[1.5]" />
+      <span className="bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-lg font-bold tracking-tight text-transparent">
+        BudWiser
+      </span>
     </a>
   );
 }

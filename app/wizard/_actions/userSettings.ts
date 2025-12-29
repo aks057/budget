@@ -1,32 +1,31 @@
 "use server";
 
-import prisma from "@/lib/prisma";
+import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/supabase/auth";
 import { UpdateUserCurrencySchema } from "@/schema/userSettings";
-import { currentUser } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
 
 export async function UpdateUserCurrency(currency: string) {
-  const parsedBody = UpdateUserCurrencySchema.safeParse({
-    currency,
-  });
+  const parsedBody = UpdateUserCurrencySchema.safeParse({ currency });
 
   if (!parsedBody.success) {
     throw parsedBody.error;
   }
 
-  const user = await currentUser();
-  if (!user) {
-    redirect("/sign-in");
+  const user = await requireUser();
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("user_settings")
+    .upsert({
+      user_id: user.id,
+      currency,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(error.message);
   }
 
-  const userSettings = await prisma.userSettings.update({
-    where: {
-      userId: user.id,
-    },
-    data: {
-      currency,
-    },
-  });
-
-  return userSettings;
+  return data;
 }

@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { DateToUTCDate, GetFormatterForCurrency } from "@/lib/helpers";
 import { TransactionType } from "@/lib/types";
-import { UserSettings } from "@prisma/client";
+import { UserSettings } from "@/lib/supabase/database.types";
 import { useQuery } from "@tanstack/react-query";
 import React, { useMemo } from "react";
 
