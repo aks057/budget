@@ -16,7 +16,7 @@ export async function GET(request: Request) {
   }
 
   // Get distinct years
-  const years = [...new Set(result?.map((el) => el.year) || [])];
+  const years = Array.from(new Set(result?.map((el) => el.year) || []));
 
   if (years.length === 0) {
     return Response.json([new Date().getFullYear()]);
