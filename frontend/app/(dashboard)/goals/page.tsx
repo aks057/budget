@@ -1,5 +1,9 @@
 "use client";
 
+import { useAiPanel } from "@/components/agent/AiPanelProvider";
+import { EmptyState } from "@/components/EmptyState";
+import { AnimatedNumber, EASE_OUT, SpotlightCard, Stagger, StaggerItem } from "@/components/motion";
+import { PageHeader } from "@/components/PageHeader";
 import { useCurrentUser } from "@/components/providers/AuthProvider";
 import SkeletonWrapper from "@/components/SkeletonWrapper";
 import {
@@ -12,16 +16,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Progress } from "@/components/ui/progress";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ApiError } from "@/lib/api/client";
 import { deleteGoal, getGoals } from "@/lib/api/endpoints";
 import type { GoalDto } from "@/lib/api/types";
@@ -29,15 +25,17 @@ import { GetFormatterForCurrency } from "@/lib/helpers";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
-import { MoreHorizontal, Pencil, Plus, Sparkles, Target, Trash2 } from "lucide-react";
-import Link from "next/link";
-import { useMemo, useState } from "react";
+import { motion } from "framer-motion";
+import { CalendarDays, MoreHorizontal, Pencil, PartyPopper, Plus, Sparkles, Target, Trash2 } from "lucide-react";
+import { useId, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { GoalDialog } from "./_components/GoalDialog";
 
 export default function GoalsPage() {
   const user = useCurrentUser();
+  const { ask } = useAiPanel();
   const formatter = useMemo(() => GetFormatterForCurrency(user.currency), [user.currency]);
+  const formatMoney = useMemo(() => (value: number) => formatter.format(value), [formatter]);
   const [dialog, setDialog] = useState<{ open: boolean; goal?: GoalDto }>({ open: false });
   const [toDelete, setToDelete] = useState<GoalDto | null>(null);
 
@@ -53,60 +51,71 @@ export default function GoalsPage() {
     onError: (error) => toast.error(error instanceof ApiError ? error.userMessage : "Could not delete the goal"),
   });
 
+  const totals = useMemo(() => {
+    const list = goals.data ?? [];
+    return {
+      saved: list.reduce((sum, goal) => sum + goal.currentAmount, 0),
+      target: list.reduce((sum, goal) => sum + goal.targetAmount, 0),
+      achieved: list.filter((goal) => goal.achieved).length,
+    };
+  }, [goals.data]);
+
   return (
-    <>
-      <div className="border-b bg-card">
-        <div className="container flex flex-wrap items-center justify-between gap-6 py-8">
-          <div>
-            <p className="text-3xl font-bold">Goals</p>
-            <p className="text-muted-foreground">Track what you are saving towards</p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button asChild variant="outline" className="gap-2">
-              <Link href={`/ai?q=${encodeURIComponent("Am I on track for my goals?")}`}>
-                <Sparkles className="h-4 w-4" /> Ask AI
-              </Link>
+    <div className="pb-16">
+      <PageHeader
+        icon={Target}
+        title="Goals"
+        subtitle={
+          (goals.data?.length ?? 0) > 0 ? (
+            <>
+              <AnimatedNumber value={totals.saved} format={formatMoney} className="font-semibold text-foreground" /> saved of{" "}
+              {formatter.format(totals.target)} across {goals.data?.length} goal{goals.data?.length === 1 ? "" : "s"}
+              {totals.achieved > 0 && ` · ${totals.achieved} reached`}
+            </>
+          ) : (
+            "Track what you're saving towards"
+          )
+        }
+        actions={
+          <>
+            <Button variant="outline" className="gap-2" onClick={() => ask("Am I on track for my goals?")}>
+              <Sparkles className="h-4 w-4 text-primary" /> Ask AI
             </Button>
             <Button className="gap-2" onClick={() => setDialog({ open: true })}>
               <Plus className="h-4 w-4" /> New goal
             </Button>
-          </div>
-        </div>
-      </div>
+          </>
+        }
+      />
 
-      <div className="container py-6">
-        {goals.isError && <p className="text-sm text-red-500">Could not load goals.</p>}
+      <div className="container">
+        {goals.isError && <p className="text-sm text-expense">Could not load goals.</p>}
         <SkeletonWrapper isLoading={goals.isLoading}>
           {goals.data?.length === 0 ? (
-            <Card className="flex flex-col items-center gap-3 py-12 text-center">
-              <Target className="h-12 w-12 text-muted-foreground/50" />
-              <p className="text-lg font-medium">No goals yet</p>
-              <p className="max-w-sm text-sm text-muted-foreground">
-                Add a target like an emergency fund or a trip, and see how much to save each month.
-              </p>
-              <Button onClick={() => setDialog({ open: true })}>Create your first goal</Button>
-            </Card>
+            <EmptyState
+              icon={Target}
+              title="No goals yet"
+              description="Add a target like an emergency fund or a trip, and see how much to save each month."
+              action={<Button onClick={() => setDialog({ open: true })}>Create your first goal</Button>}
+            />
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <Stagger onMount className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {goals.data?.map((goal) => (
-                <GoalCard
-                  key={goal.id}
-                  goal={goal}
-                  formatter={formatter}
-                  onEdit={() => setDialog({ open: true, goal })}
-                  onDelete={() => setToDelete(goal)}
-                />
+                <StaggerItem key={goal.id}>
+                  <GoalCard
+                    goal={goal}
+                    formatter={formatter}
+                    onEdit={() => setDialog({ open: true, goal })}
+                    onDelete={() => setToDelete(goal)}
+                  />
+                </StaggerItem>
               ))}
-            </div>
+            </Stagger>
           )}
         </SkeletonWrapper>
       </div>
 
-      <GoalDialog
-        open={dialog.open}
-        goal={dialog.goal}
-        onOpenChange={(open) => setDialog((prev) => ({ ...prev, open }))}
-      />
+      <GoalDialog open={dialog.open} goal={dialog.goal} onOpenChange={(open) => setDialog((prev) => ({ ...prev, open }))} />
 
       <AlertDialog open={toDelete !== null} onOpenChange={(open) => !open && setToDelete(null)}>
         <AlertDialogContent>
@@ -120,7 +129,49 @@ export default function GoalsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
+  );
+}
+
+function ProgressRing({ percent, achieved }: { percent: number; achieved: boolean }) {
+  const gradientId = useId().replace(/:/g, "");
+  const radius = 40;
+  const circumference = 2 * Math.PI * radius;
+  return (
+    <div className="relative h-28 w-28 shrink-0">
+      <svg viewBox="0 0 100 100" className="h-28 w-28 -rotate-90">
+        <circle cx="50" cy="50" r={radius} fill="none" stroke="hsl(var(--muted))" strokeWidth="8" />
+        <motion.circle
+          cx="50"
+          cy="50"
+          r={radius}
+          fill="none"
+          stroke={`url(#${gradientId})`}
+          strokeWidth="8"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          initial={{ strokeDashoffset: circumference }}
+          animate={{ strokeDashoffset: circumference * (1 - Math.min(percent, 100) / 100) }}
+          transition={{ duration: 1.3, ease: EASE_OUT, delay: 0.1 }}
+        />
+        <defs>
+          <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#34d399" />
+            <stop offset="100%" stopColor={achieved ? "#34d399" : "#22d3ee"} />
+          </linearGradient>
+        </defs>
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        {achieved ? (
+          <PartyPopper className="h-7 w-7 text-income" />
+        ) : (
+          <>
+            <AnimatedNumber value={percent} format={(v) => `${Math.round(v)}%`} className="font-display text-xl font-bold" />
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">saved</span>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -136,24 +187,28 @@ function GoalCard({
   onDelete: () => void;
 }) {
   const status = goal.achieved
-    ? { label: "Achieved", className: "bg-emerald-500/10 text-emerald-500" }
+    ? { label: "Achieved", className: "bg-income/10 text-income" }
     : goal.overdue
-      ? { label: "Overdue", className: "bg-red-500/10 text-red-500" }
-      : null;
+      ? { label: "Overdue", className: "bg-expense/10 text-expense" }
+      : { label: "In progress", className: "bg-primary/10 text-primary" };
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+    <SpotlightCard
+      className={cn(
+        "h-full p-5",
+        goal.achieved && "border-income/40",
+        goal.overdue && "border-expense/30"
+      )}
+    >
+      <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <CardTitle className="truncate text-base">{goal.name}</CardTitle>
-          <p className="text-xs text-muted-foreground">by {format(parseISO(goal.targetDate), "d MMM yyyy")}</p>
+          <p className="truncate font-display text-lg font-semibold">{goal.name}</p>
+          <p className="flex items-center gap-1 text-xs text-muted-foreground">
+            <CalendarDays className="h-3 w-3" /> by {format(parseISO(goal.targetDate), "d MMM yyyy")}
+          </p>
         </div>
         <div className="flex items-center gap-1">
-          {status && (
-            <Badge variant="outline" className={cn("border-0", status.className)}>
-              {status.label}
-            </Badge>
-          )}
+          <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", status.className)}>{status.label}</span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Actions for ${goal.name}`}>
@@ -164,40 +219,35 @@ function GoalCard({
               <DropdownMenuItem onSelect={onEdit} className="gap-2">
                 <Pencil className="h-4 w-4" /> Edit / update savings
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={onDelete} className="gap-2 text-red-500">
+              <DropdownMenuItem onSelect={onDelete} className="gap-2 text-expense">
                 <Trash2 className="h-4 w-4" /> Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        <Progress
-          value={Math.min(goal.percentComplete, 100)}
-          indicator={goal.achieved ? "bg-emerald-500" : "bg-amber-500"}
-          className="h-2"
-          aria-label={`${goal.percentComplete}% saved`}
-        />
-        <div className="flex justify-between text-sm">
-          <span>
-            <span className="font-semibold">{formatter.format(goal.currentAmount)}</span>
-            <span className="text-muted-foreground"> of {formatter.format(goal.targetAmount)}</span>
-          </span>
-          <span className="tabular-nums text-muted-foreground">{Math.round(goal.percentComplete)}%</span>
-        </div>
-        {!goal.achieved && (
-          <p className="text-sm text-muted-foreground">
-            {goal.overdue ? (
-              <>Target date passed with {formatter.format(goal.remaining)} to go.</>
-            ) : (
-              <>
-                Save <span className="font-medium text-foreground">{formatter.format(goal.requiredMonthlyContribution)}</span>
-                /month for {goal.monthsRemaining} {goal.monthsRemaining === 1 ? "month" : "months"}
-              </>
-            )}
+      </div>
+
+      <div className="mt-5 flex items-center gap-5">
+        <ProgressRing percent={goal.percentComplete} achieved={goal.achieved} />
+        <div className="space-y-1 text-sm">
+          <p>
+            <span className="font-display text-xl font-bold tabular-nums">{formatter.format(goal.currentAmount)}</span>
           </p>
-        )}
-      </CardContent>
-    </Card>
+          <p className="text-muted-foreground">of {formatter.format(goal.targetAmount)}</p>
+          {!goal.achieved && (
+            <p className="pt-1 text-muted-foreground">
+              {goal.overdue ? (
+                <span className="text-expense">{formatter.format(goal.remaining)} still to go</span>
+              ) : (
+                <>
+                  <span className="font-semibold text-primary">{formatter.format(goal.requiredMonthlyContribution)}</span>/mo ·{" "}
+                  {goal.monthsRemaining} {goal.monthsRemaining === 1 ? "month" : "months"}
+                </>
+              )}
+            </p>
+          )}
+        </div>
+      </div>
+    </SpotlightCard>
   );
 }

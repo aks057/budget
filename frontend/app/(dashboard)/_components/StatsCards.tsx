@@ -1,14 +1,18 @@
 "use client";
 
+import { Sparkline } from "@/components/charts/Sparkline";
+import { AnimatedNumber, SpotlightCard, Stagger, StaggerItem } from "@/components/motion";
 import SkeletonWrapper from "@/components/SkeletonWrapper";
-import { Card } from "@/components/ui/card";
-import { getOverview, toApiDate } from "@/lib/api/endpoints";
+import { getOverview, getTrends, toApiDate } from "@/lib/api/endpoints";
+import { EXPENSE_COLOR, INCOME_COLOR } from "@/lib/chartColors";
 import { GetFormatterForCurrency } from "@/lib/helpers";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { TrendingDown, TrendingUp, Wallet } from "lucide-react";
-import React, { ReactNode, useCallback, useMemo } from "react";
-import CountUp from "react-countup";
+import { TrendingDown, TrendingUp, Wallet, type LucideIcon } from "lucide-react";
+import { useMemo } from "react";
+
+const TREND_MONTHS = 6;
+const BALANCE_COLOR = "#22d3ee"; // brand-2 (cyan)
 
 interface Props {
   from: Date;
@@ -21,92 +25,101 @@ function StatsCards({ from, to, currency }: Props) {
     queryKey: ["overview", "stats", toApiDate(from), toApiDate(to)],
     queryFn: () => getOverview(from, to),
   });
+  // Under "overview" so creating/deleting a transaction refreshes the sparklines too.
+  const trendsQuery = useQuery({
+    queryKey: ["overview", "trends", TREND_MONTHS],
+    queryFn: () => getTrends(TREND_MONTHS),
+  });
 
   const formatter = useMemo(() => GetFormatterForCurrency(currency), [currency]);
+  const format = useMemo(() => (value: number) => formatter.format(value), [formatter]);
 
+  const trends = trendsQuery.data ?? [];
   const income = statsQuery.data?.income ?? 0;
   const expense = statsQuery.data?.expense ?? 0;
   const balance = statsQuery.data?.balance ?? 0;
 
   return (
-    <div className="relative flex w-full flex-wrap gap-4 md:flex-nowrap">
-      <SkeletonWrapper isLoading={statsQuery.isFetching}>
-        <StatCard
-          formatter={formatter}
-          value={income}
-          title="Income"
-          description="Total earnings"
-          icon={<TrendingUp className="h-5 w-5 text-emerald-500" />}
-          iconBg="bg-emerald-500/10"
-          valueColor="text-emerald-500"
-        />
-      </SkeletonWrapper>
-
-      <SkeletonWrapper isLoading={statsQuery.isFetching}>
-        <StatCard
-          formatter={formatter}
-          value={expense}
-          title="Expense"
-          description="Total spending"
-          icon={<TrendingDown className="h-5 w-5 text-red-500" />}
-          iconBg="bg-red-500/10"
-          valueColor="text-red-500"
-        />
-      </SkeletonWrapper>
-
-      <SkeletonWrapper isLoading={statsQuery.isFetching}>
-        <StatCard
-          formatter={formatter}
-          value={balance}
-          title="Balance"
-          description="Net savings"
-          icon={<Wallet className="h-5 w-5 text-amber-500" />}
-          iconBg="bg-amber-500/10"
-          valueColor={balance >= 0 ? "text-emerald-500" : "text-red-500"}
-        />
-      </SkeletonWrapper>
-    </div>
+    <SkeletonWrapper isLoading={statsQuery.isLoading}>
+      <Stagger onMount className="grid w-full gap-4 md:grid-cols-3">
+        <StaggerItem>
+          <StatCard
+            title="Income"
+            icon={TrendingUp}
+            tone="text-income"
+            tile="bg-income/10 border-income/20"
+            value={income}
+            format={format}
+            trend={trends.map((month) => month.income)}
+            color={INCOME_COLOR}
+          />
+        </StaggerItem>
+        <StaggerItem>
+          <StatCard
+            title="Expenses"
+            icon={TrendingDown}
+            tone="text-expense"
+            tile="bg-expense/10 border-expense/20"
+            value={expense}
+            format={format}
+            trend={trends.map((month) => month.expense)}
+            color={EXPENSE_COLOR}
+          />
+        </StaggerItem>
+        <StaggerItem>
+          <StatCard
+            title="Balance"
+            icon={Wallet}
+            tone={balance >= 0 ? "text-foreground" : "text-expense"}
+            tile="bg-brand-2/10 border-brand-2/20"
+            iconTone="text-brand-2"
+            value={balance}
+            format={format}
+            trend={trends.map((month) => month.savings)}
+            color={BALANCE_COLOR}
+          />
+        </StaggerItem>
+      </Stagger>
+    </SkeletonWrapper>
   );
 }
 
 export default StatsCards;
 
 function StatCard({
-  formatter,
-  value,
   title,
-  description,
-  icon,
-  iconBg,
-  valueColor,
+  icon: Icon,
+  tone,
+  tile,
+  iconTone,
+  value,
+  format,
+  trend,
+  color,
 }: {
-  formatter: Intl.NumberFormat;
-  icon: ReactNode;
-  iconBg: string;
   title: string;
-  description: string;
+  icon: LucideIcon;
+  tone: string;
+  tile: string;
+  iconTone?: string;
   value: number;
-  valueColor?: string;
+  format: (value: number) => string;
+  trend: number[];
+  color: string;
 }) {
-  const formatFn = useCallback((value: number) => formatter.format(value), [formatter]);
-
   return (
-    <Card className="flex h-auto w-full flex-col gap-4 p-6 transition-all hover:shadow-lg hover:shadow-black/5 dark:hover:shadow-white/5">
+    <SpotlightCard className="h-full p-5">
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium text-muted-foreground">{title}</p>
-        <div className={cn("rounded-lg p-2", iconBg)}>{icon}</div>
+        <span className={cn("flex h-9 w-9 items-center justify-center rounded-xl border", tile)}>
+          <Icon className={cn("h-4 w-4", iconTone ?? tone)} />
+        </span>
       </div>
-      <div className="flex flex-col gap-1">
-        <CountUp
-          preserveValue
-          redraw={false}
-          end={value}
-          decimals={2}
-          formattingFn={formatFn}
-          className={cn("text-2xl font-bold", valueColor)}
-        />
-        <p className="text-xs text-muted-foreground">{description}</p>
+      <AnimatedNumber value={value} format={format} className={cn("mt-3 block font-display text-3xl font-bold tracking-tight", tone)} />
+      <div className="mt-3">
+        <Sparkline values={trend} color={color} />
+        <p className="mt-1 text-[11px] uppercase tracking-wider text-muted-foreground">Last {TREND_MONTHS} months</p>
       </div>
-    </Card>
+    </SpotlightCard>
   );
 }

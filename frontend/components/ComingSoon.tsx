@@ -15,8 +15,8 @@ export default function ComingSoon({ title, description }: ComingSoonProps) {
     <div className="flex min-h-[60vh] items-center justify-center px-4">
       <Card className="w-full max-w-md border-dashed">
         <CardContent className="flex flex-col items-center justify-center p-8 text-center">
-          <div className="mb-6 rounded-full bg-amber-500/10 p-4">
-            <Construction className="h-12 w-12 text-amber-500" />
+          <div className="mb-6 rounded-full bg-primary/10 p-4">
+            <Construction className="h-12 w-12 text-primary" />
           </div>
           <h1 className="mb-2 text-2xl font-bold">{title}</h1>
           <p className="mb-6 text-muted-foreground">

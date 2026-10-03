@@ -4,7 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SkeletonWrapper from "@/components/SkeletonWrapper";
+import { AnimatedNumber, SpotlightCard, Stagger, StaggerItem } from "@/components/motion";
 import { GetFormatterForCurrency } from "@/lib/helpers";
+import { CATEGORY_COLORS, EXPENSE_COLOR, INCOME_COLOR } from "@/lib/chartColors";
 import { CategoryStat, getCategoryStats, getOverview, getTrends, toApiDate } from "@/lib/api/endpoints";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -38,16 +40,7 @@ const TREND_MONTHS = 6;
 const toSlices = (stats: CategoryStat[] | undefined) =>
   (stats ?? []).map((stat) => ({ id: stat.categoryId, name: stat.categoryName, icon: stat.categoryIcon, value: stat.total }));
 
-const COLORS = [
-  "#f59e0b",
-  "#ef4444",
-  "#10b981",
-  "#3b82f6",
-  "#8b5cf6",
-  "#ec4899",
-  "#06b6d4",
-  "#84cc16",
-];
+const COLORS = CATEGORY_COLORS;
 
 export default function AnalyticsDashboard({ currency }: { currency: string }) {
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
@@ -56,6 +49,8 @@ export default function AnalyticsDashboard({ currency }: { currency: string }) {
   });
 
   const formatter = useMemo(() => GetFormatterForCurrency(currency), [currency]);
+  const formatMoney = useMemo(() => (value: number) => formatter.format(value), [formatter]);
+  const formatPercent = useMemo(() => (value: number) => `${value.toFixed(1)}%`, []);
 
   const fromKey = toApiDate(dateRange.from);
   const toKey = toApiDate(dateRange.to);
@@ -104,12 +99,12 @@ export default function AnalyticsDashboard({ currency }: { currency: string }) {
   const savingsRate = totalIncome > 0 ? (balance / totalIncome) * 100 : 0;
 
   return (
-    <div className="container py-8">
+    <div className="container pb-16">
       {/* Date Range Picker */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Calendar className="h-5 w-5 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">Select period:</span>
+          <Calendar className="h-5 w-5 text-primary" />
+          <span className="text-sm text-muted-foreground">Period</span>
         </div>
         <DateRangePicker
           initialDateFrom={dateRange.from}
@@ -129,72 +124,27 @@ export default function AnalyticsDashboard({ currency }: { currency: string }) {
         />
       </div>
 
-      {/* Summary Cards */}
-      <div className="mb-8 grid gap-4 md:grid-cols-4">
-        <SkeletonWrapper isLoading={overviewQuery.isLoading}>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total Income</CardTitle>
-              <TrendingUp className="h-4 w-4 text-emerald-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-emerald-500">
-                {formatter.format(totalIncome)}
-              </div>
-            </CardContent>
-          </Card>
-        </SkeletonWrapper>
-
-        <SkeletonWrapper isLoading={overviewQuery.isLoading}>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total Expense</CardTitle>
-              <TrendingDown className="h-4 w-4 text-red-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-500">
-                {formatter.format(totalExpense)}
-              </div>
-            </CardContent>
-          </Card>
-        </SkeletonWrapper>
-
-        <SkeletonWrapper isLoading={overviewQuery.isLoading}>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Balance</CardTitle>
-              <BarChart3 className="h-4 w-4 text-amber-500" />
-            </CardHeader>
-            <CardContent>
-              <div
-                className={`text-2xl font-bold ${
-                  balance >= 0 ? "text-emerald-500" : "text-red-500"
-                }`}
-              >
-                {formatter.format(balance)}
-              </div>
-            </CardContent>
-          </Card>
-        </SkeletonWrapper>
-
-        <SkeletonWrapper isLoading={overviewQuery.isLoading}>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Savings Rate</CardTitle>
-              <PieChartIcon className="h-4 w-4 text-blue-500" />
-            </CardHeader>
-            <CardContent>
-              <div
-                className={`text-2xl font-bold ${
-                  savingsRate >= 0 ? "text-emerald-500" : "text-red-500"
-                }`}
-              >
-                {savingsRate.toFixed(1)}%
-              </div>
-            </CardContent>
-          </Card>
-        </SkeletonWrapper>
-      </div>
+      {/* Summary metrics */}
+      <SkeletonWrapper isLoading={overviewQuery.isLoading}>
+        <Stagger onMount className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            { label: "Total income", value: totalIncome, icon: TrendingUp, tone: "text-income", format: formatMoney },
+            { label: "Total expense", value: totalExpense, icon: TrendingDown, tone: "text-expense", format: formatMoney },
+            { label: "Balance", value: balance, icon: BarChart3, tone: balance >= 0 ? "text-foreground" : "text-expense", iconTone: "text-brand-2", format: formatMoney },
+            { label: "Savings rate", value: savingsRate, icon: PieChartIcon, tone: savingsRate >= 0 ? "text-income" : "text-expense", format: formatPercent },
+          ].map((metric) => (
+            <StaggerItem key={metric.label}>
+              <SpotlightCard className="h-full p-5">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium text-muted-foreground">{metric.label}</p>
+                  <metric.icon className={`h-4 w-4 ${metric.iconTone ?? metric.tone}`} />
+                </div>
+                <AnimatedNumber value={metric.value} format={metric.format} className={`mt-3 block font-display text-2xl font-bold tracking-tight ${metric.tone}`} />
+              </SpotlightCard>
+            </StaggerItem>
+          ))}
+        </Stagger>
+      </SkeletonWrapper>
 
       {/* Trend Chart */}
       <Card className="mb-8">
@@ -211,12 +161,12 @@ export default function AnalyticsDashboard({ currency }: { currency: string }) {
                 <AreaChart data={trendData}>
                   <defs>
                     <linearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                      <stop offset="5%" stopColor={INCOME_COLOR} stopOpacity={0.8} />
+                      <stop offset="95%" stopColor={INCOME_COLOR} stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="expenseGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8} />
-                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                      <stop offset="5%" stopColor={EXPENSE_COLOR} stopOpacity={0.8} />
+                      <stop offset="95%" stopColor={EXPENSE_COLOR} stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
@@ -245,7 +195,7 @@ export default function AnalyticsDashboard({ currency }: { currency: string }) {
                   <Area
                     type="monotone"
                     dataKey="income"
-                    stroke="#10b981"
+                    stroke={INCOME_COLOR}
                     fillOpacity={1}
                     fill="url(#incomeGradient)"
                     name="Income"
@@ -253,7 +203,7 @@ export default function AnalyticsDashboard({ currency }: { currency: string }) {
                   <Area
                     type="monotone"
                     dataKey="expense"
-                    stroke="#ef4444"
+                    stroke={EXPENSE_COLOR}
                     fillOpacity={1}
                     fill="url(#expenseGradient)"
                     name="Expense"
@@ -262,7 +212,7 @@ export default function AnalyticsDashboard({ currency }: { currency: string }) {
               </ResponsiveContainer>
             ) : (
               <div className="flex h-[300px] flex-col items-center justify-center rounded-lg border border-dashed">
-                <BarChart3 className="h-12 w-12 text-muted-foreground/50" />
+                <BarChart3 className="h-12 w-12 text-primary/40" />
                 <p className="mt-4 text-lg font-medium">No data available</p>
                 <p className="text-sm text-muted-foreground">
                   Add some transactions to see your trends
@@ -348,7 +298,7 @@ export default function AnalyticsDashboard({ currency }: { currency: string }) {
                   </div>
                 ) : (
                   <div className="flex h-[300px] flex-col items-center justify-center rounded-lg border border-dashed">
-                    <PieChartIcon className="h-12 w-12 text-muted-foreground/50" />
+                    <PieChartIcon className="h-12 w-12 text-primary/40" />
                     <p className="mt-4 text-lg font-medium">No expenses yet</p>
                     <p className="text-sm text-muted-foreground">
                       Add expense transactions to see the breakdown
@@ -422,7 +372,7 @@ export default function AnalyticsDashboard({ currency }: { currency: string }) {
                   </div>
                 ) : (
                   <div className="flex h-[300px] flex-col items-center justify-center rounded-lg border border-dashed">
-                    <PieChartIcon className="h-12 w-12 text-muted-foreground/50" />
+                    <PieChartIcon className="h-12 w-12 text-primary/40" />
                     <p className="mt-4 text-lg font-medium">No income yet</p>
                     <p className="text-sm text-muted-foreground">
                       Add income transactions to see the breakdown

@@ -121,7 +121,7 @@ function CreateCategoryDialog({ type, successCallback, trigger }: Props) {
             <span
               className={cn(
                 "m-1",
-                type === "income" ? "text-emerald-500" : "text-red-500"
+                type === "income" ? "text-income" : "text-expense"
               )}
             >
               {type}

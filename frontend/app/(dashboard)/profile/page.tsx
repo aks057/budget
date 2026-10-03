@@ -16,7 +16,9 @@ import { useAuth, useCurrentUser } from "@/components/providers/AuthProvider";
 import { ApiError } from "@/lib/api/client";
 import { updateMe } from "@/lib/api/endpoints";
 import { useMutation } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { Reveal } from "@/components/motion";
+import { PageHeader } from "@/components/PageHeader";
+import { Loader2, UserRound } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -68,21 +70,10 @@ function ProfilePage() {
   const isPending = updateProfileMutation.isPending;
 
   return (
-    <>
-      {/* HEADER */}
-      <div className="border-b bg-card">
-        <div className="container flex flex-wrap items-center justify-between gap-6 py-8">
-          <div>
-            <p className="text-3xl font-bold">Profile</p>
-            <p className="text-muted-foreground">
-              Manage your personal information
-            </p>
-          </div>
-        </div>
-      </div>
+    <div className="pb-16">
+      <PageHeader icon={UserRound} title="Profile" subtitle="Your personal information" />
 
-      {/* CONTENT */}
-      <div className="container flex flex-col gap-4 p-4">
+      <Reveal onMount delay={0.05} className="container flex max-w-3xl flex-col gap-4">
         <Card>
           <CardHeader>
             <CardTitle>Personal Information</CardTitle>
@@ -93,9 +84,9 @@ function ProfilePage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Avatar: Google profile photo when available, initials otherwise */}
               <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
-                <Avatar className="h-24 w-24">
+                <Avatar className="h-24 w-24 ring-2 ring-primary/40 ring-offset-4 ring-offset-background">
                   <AvatarImage src={user.avatarUrl || undefined} alt="Profile" />
-                  <AvatarFallback className="text-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-white">
+                  <AvatarFallback className="text-2xl bg-brand-gradient text-brand-foreground">
                     {initialsOf(user.fullName, user.email)}
                   </AvatarFallback>
                 </Avatar>
@@ -139,8 +130,8 @@ function ProfilePage() {
             </form>
           </CardContent>
         </Card>
-      </div>
-    </>
+      </Reveal>
+    </div>
   );
 }
 

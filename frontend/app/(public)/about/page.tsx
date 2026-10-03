@@ -54,15 +54,15 @@ export default function AboutPage() {
     <div className="container py-12 md:py-20">
       {/* Hero Section */}
       <div className="mx-auto max-w-3xl text-center">
-        <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-amber-500/10 px-4 py-2">
-          <PiggyBank className="h-5 w-5 text-amber-500" />
-          <span className="text-sm font-medium text-amber-500">
+        <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2">
+          <PiggyBank className="h-5 w-5 text-primary" />
+          <span className="text-sm font-medium text-primary">
             About BudWiser
           </span>
         </div>
         <h1 className="mb-6 text-4xl font-bold tracking-tight md:text-5xl">
           Take Control of Your{" "}
-          <span className="bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
+          <span className="gradient-text">
             Financial Future
           </span>
         </h1>
@@ -72,7 +72,7 @@ export default function AboutPage() {
           achieve your financial goals.
         </p>
         <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <Button asChild size="lg" className="bg-amber-500 hover:bg-amber-600">
+          <Button asChild size="lg">
             <Link href="/sign-up">Get Started Free</Link>
           </Button>
           <Button asChild variant="outline" size="lg">
@@ -90,8 +90,8 @@ export default function AboutPage() {
           {features.map((feature) => (
             <Card key={feature.title} className="border-dashed">
               <CardContent className="p-6">
-                <div className="mb-4 inline-flex rounded-lg bg-amber-500/10 p-3">
-                  <feature.icon className="h-6 w-6 text-amber-500" />
+                <div className="mb-4 inline-flex rounded-lg bg-primary/10 p-3">
+                  <feature.icon className="h-6 w-6 text-primary" />
                 </div>
                 <h3 className="mb-2 text-lg font-semibold">{feature.title}</h3>
                 <p className="text-sm text-muted-foreground">
@@ -105,7 +105,7 @@ export default function AboutPage() {
 
       {/* Mission Section */}
       <div className="mt-20">
-        <Card className="bg-gradient-to-br from-amber-500/10 to-orange-500/10">
+        <Card className="border-gradient">
           <CardContent className="p-8 md:p-12">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="mb-4 text-2xl font-bold md:text-3xl">
@@ -129,7 +129,7 @@ export default function AboutPage() {
         <p className="mb-8 text-muted-foreground">
           Join thousands of users who are already managing their finances smarter.
         </p>
-        <Button asChild size="lg" className="bg-amber-500 hover:bg-amber-600">
+        <Button asChild size="lg">
           <Link href="/sign-up">Create Free Account</Link>
         </Button>
       </div>

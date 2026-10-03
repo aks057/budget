@@ -125,7 +125,7 @@ export function Notifications() {
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               </div>
             )}
-            {insights.isError && <p className="px-4 py-6 text-sm text-red-500">Could not load notifications.</p>}
+            {insights.isError && <p className="px-4 py-6 text-sm text-expense">Could not load notifications.</p>}
             {insights.data?.length === 0 && (
               <div className="flex flex-col items-center justify-center px-4 py-8 text-center">
                 <Bell className="mb-2 h-8 w-8 text-muted-foreground/50" />

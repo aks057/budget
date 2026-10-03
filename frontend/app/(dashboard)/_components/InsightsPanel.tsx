@@ -1,23 +1,20 @@
 "use client";
 
+import { AnimatedNumber, EASE_OUT, SpotlightCard } from "@/components/motion";
+import { useAiPanel } from "@/components/agent/AiPanelProvider";
 import SkeletonWrapper from "@/components/SkeletonWrapper";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAnomalies, getMonthlySummary } from "@/lib/api/endpoints";
-import type { AnomalyDto, AnomalySeverity } from "@/lib/api/types";
+import type { AnomalyDto } from "@/lib/api/types";
 import { GetFormatterForCurrency } from "@/lib/helpers";
+import { SEVERITY_STYLE } from "@/lib/insights";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, CheckCircle2, Info, OctagonAlert, TrendingDown, TrendingUp } from "lucide-react";
+import { motion } from "framer-motion";
+import { ArrowRight, CalendarClock, CheckCircle2, ShieldAlert, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { useMemo } from "react";
 
 const MAX_ALERTS = 4;
-
-const SEVERITY: Record<AnomalySeverity, { icon: typeof Info; className: string }> = {
-  CRITICAL: { icon: OctagonAlert, className: "text-red-500" },
-  WARNING: { icon: AlertTriangle, className: "text-amber-500" },
-  INFO: { icon: Info, className: "text-blue-500" },
-};
 
 /**
  * Deterministic phrasing of the backend's anomaly facts. Numbers come straight from the analytics engine;
@@ -39,7 +36,9 @@ function describe(anomaly: AnomalyDto, formatter: Intl.NumberFormat): string {
 }
 
 export function InsightsPanel({ currency }: { currency: string }) {
+  const { ask } = useAiPanel();
   const formatter = useMemo(() => GetFormatterForCurrency(currency), [currency]);
+  const format = useMemo(() => (value: number) => formatter.format(value), [formatter]);
 
   // Keys live under "overview" so every transaction change (which invalidates ["overview"]) refreshes them.
   const summary = useQuery({ queryKey: ["overview", "insights", "summary"], queryFn: () => getMonthlySummary() });
@@ -48,93 +47,110 @@ export function InsightsPanel({ currency }: { currency: string }) {
   const data = summary.data;
   const forecast = data?.forecast;
   const change = data?.expenseChangePercent ?? null;
+  // Share of the projected month-end total already spent (drives the progress bar).
+  const spentShare = forecast && forecast.projectedTotal > 0 ? Math.min((forecast.spentSoFar / forecast.projectedTotal) * 100, 100) : 0;
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
+    <div className="grid gap-4 lg:grid-cols-5">
       <SkeletonWrapper isLoading={summary.isLoading}>
-        <Card className="h-full">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">This month so far</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            {summary.isError && <p className="text-red-500">Could not load this month&apos;s summary.</p>}
-            {data && (
-              <>
-                <Row label="Spent" value={formatter.format(data.expense)} />
-                {forecast && (
-                  <Row
-                    label={`Projected by month end (day ${forecast.daysElapsed} of ${forecast.daysInMonth})`}
-                    value={formatter.format(forecast.projectedTotal)}
-                  />
+        <SpotlightCard className="h-full p-5 lg:col-span-2">
+          <div className="mb-4 flex items-center justify-between">
+            <p className="flex items-center gap-2 font-display font-semibold">
+              <CalendarClock className="h-4 w-4 text-primary" /> This month so far
+            </p>
+            {change !== null && (
+              <span
+                className={cn(
+                  "flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold",
+                  change > 0 ? "bg-expense/10 text-expense" : "bg-income/10 text-income"
                 )}
-                {change !== null && (
-                  <Row
-                    label="Compared with last month"
-                    value={
-                      <span className={cn("flex items-center gap-1", change > 0 ? "text-red-500" : "text-emerald-500")}>
-                        {change > 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                        {change > 0 ? "+" : ""}
-                        {Math.round(change)}%
-                      </span>
-                    }
-                  />
-                )}
-                <Row
-                  label="Savings rate"
-                  value={data.savingsRate === null ? "No income yet" : `${Math.round(data.savingsRate)}%`}
-                />
-              </>
+              >
+                {change > 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                {change > 0 ? "+" : ""}
+                {Math.round(change)}% vs last month
+              </span>
             )}
-          </CardContent>
-        </Card>
+          </div>
+          {summary.isError && <p className="text-sm text-expense">Could not load this month&apos;s summary.</p>}
+          {data && (
+            <>
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">Spent</p>
+              <AnimatedNumber value={data.expense} format={format} className="block font-display text-4xl font-bold tracking-tight" />
+              {forecast && (
+                <div className="mt-4">
+                  <div className="h-2 overflow-hidden rounded-full bg-muted">
+                    <motion.div
+                      className="h-full rounded-full bg-brand-gradient"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${spentShare}%` }}
+                      transition={{ duration: 1, ease: EASE_OUT, delay: 0.2 }}
+                    />
+                  </div>
+                  <p className="mt-2 flex justify-between text-xs text-muted-foreground">
+                    <span>
+                      Day {forecast.daysElapsed} of {forecast.daysInMonth}
+                    </span>
+                    <span>
+                      Projected <span className="font-semibold text-foreground">{formatter.format(forecast.projectedTotal)}</span>
+                    </span>
+                  </p>
+                </div>
+              )}
+              <p className="mt-4 text-sm text-muted-foreground">
+                Savings rate{" "}
+                <span className="font-semibold text-foreground">
+                  {data.savingsRate === null ? "n/a (no income yet)" : `${Math.round(data.savingsRate)}%`}
+                </span>
+              </p>
+            </>
+          )}
+        </SpotlightCard>
       </SkeletonWrapper>
 
       <SkeletonWrapper isLoading={anomalies.isLoading}>
-        <Card className="h-full">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-base">Needs attention</CardTitle>
-            <Link href="/budgets" className="text-xs text-muted-foreground hover:text-foreground">
-              Budgets →
+        <SpotlightCard className="h-full p-5 lg:col-span-3">
+          <div className="mb-4 flex items-center justify-between">
+            <p className="flex items-center gap-2 font-display font-semibold">
+              <ShieldAlert className="h-4 w-4 text-primary" /> Needs attention
+            </p>
+            <Link href="/insights" className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground">
+              All insights <ArrowRight className="h-3 w-3" />
             </Link>
-          </CardHeader>
-          <CardContent className="text-sm">
-            {anomalies.isError && <p className="text-red-500">Could not check for unusual spending.</p>}
-            {anomalies.data?.length === 0 && (
-              <p className="flex items-center gap-2 text-muted-foreground">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Nothing unusual this month.
-              </p>
-            )}
-            <ul className="space-y-2">
-              {anomalies.data?.slice(0, MAX_ALERTS).map((anomaly, index) => {
-                const { icon: Icon, className } = SEVERITY[anomaly.severity];
-                return (
-                  <li key={`${anomaly.type}-${anomaly.categoryId}-${anomaly.transactionId ?? index}`} className="flex gap-2">
-                    <Icon className={cn("mt-0.5 h-4 w-4 shrink-0", className)} aria-label={anomaly.severity.toLowerCase()} />
-                    <span>{describe(anomaly, formatter)}</span>
-                  </li>
-                );
-              })}
-            </ul>
-            {(anomalies.data?.length ?? 0) > 0 && (
-              <Link
-                href={`/ai?q=${encodeURIComponent("Explain the unusual spending this month and what I can do about it")}`}
-                className="mt-3 inline-block text-xs font-medium text-amber-600 hover:underline dark:text-amber-400"
-              >
-                Ask the assistant what to do →
-              </Link>
-            )}
-          </CardContent>
-        </Card>
+          </div>
+          {anomalies.isError && <p className="text-sm text-expense">Could not check for unusual spending.</p>}
+          {anomalies.data?.length === 0 && (
+            <p className="flex items-center gap-2 rounded-xl border border-income/20 bg-income/5 px-3 py-3 text-sm text-muted-foreground">
+              <CheckCircle2 className="h-4 w-4 text-income" /> Nothing unusual this month. Nice.
+            </p>
+          )}
+          <ul className="space-y-2">
+            {anomalies.data?.slice(0, MAX_ALERTS).map((anomaly, index) => {
+              const { icon: Icon, className } = SEVERITY_STYLE[anomaly.severity];
+              return (
+                <motion.li
+                  key={`${anomaly.type}-${anomaly.categoryId}-${anomaly.transactionId ?? index}`}
+                  initial={{ opacity: 0, x: 12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.1 + index * 0.08, ease: EASE_OUT }}
+                  className="flex gap-3 rounded-xl border border-border/60 bg-background/40 px-3 py-2.5 text-sm"
+                >
+                  <Icon className={cn("mt-0.5 h-4 w-4 shrink-0", className)} aria-label={anomaly.severity.toLowerCase()} />
+                  <span>{describe(anomaly, formatter)}</span>
+                </motion.li>
+              );
+            })}
+          </ul>
+          {(anomalies.data?.length ?? 0) > 0 && (
+            <button
+              type="button"
+              onClick={() => ask("Explain the unusual spending this month and what I can do about it")}
+              className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+            >
+              <Sparkles className="h-3.5 w-3.5" /> Ask the assistant what to do
+            </button>
+          )}
+        </SpotlightCard>
       </SkeletonWrapper>
-    </div>
-  );
-}
-
-function Row({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="flex items-center justify-between gap-4">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-semibold tabular-nums">{value}</span>
     </div>
   );
 }

@@ -2,8 +2,8 @@ import type { AnomalySeverity, InsightDto, InsightType } from "@/lib/api/types";
 import { AlertTriangle, Info, OctagonAlert, type LucideIcon } from "lucide-react";
 
 export const SEVERITY_STYLE: Record<AnomalySeverity, { icon: LucideIcon; className: string; label: string }> = {
-  CRITICAL: { icon: OctagonAlert, className: "text-red-500", label: "Critical" },
-  WARNING: { icon: AlertTriangle, className: "text-amber-500", label: "Warning" },
+  CRITICAL: { icon: OctagonAlert, className: "text-expense", label: "Critical" },
+  WARNING: { icon: AlertTriangle, className: "text-warning", label: "Warning" },
   INFO: { icon: Info, className: "text-blue-500", label: "Info" },
 };
 
@@ -22,8 +22,9 @@ const DESTINATIONS: Record<InsightType, { href: string; label: string }> = {
 export const insightDestination = (type: InsightType) => DESTINATIONS[type];
 
 /** Opens the assistant with the insight as context; the agent then pulls the real numbers through its tools. */
-export const askAiHref = (insight: InsightDto) =>
-  `/ai?q=${encodeURIComponent(`About this alert: "${insight.title}". ${insight.body} What should I do?`.slice(0, 2000))}`;
+/** Question handed to the AI panel; the agent then pulls the real numbers through its tools. */
+export const askAiPrompt = (insight: InsightDto) =>
+  `About this alert: "${insight.title}". ${insight.body} What should I do?`.slice(0, 2000);
 
 // Shared React Query keys (everything under "insights" is invalidated together).
 export const INSIGHT_KEYS = {

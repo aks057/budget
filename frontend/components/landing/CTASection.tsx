@@ -1,95 +1,48 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { ArrowRight, PiggyBank, Sparkles } from "lucide-react";
-import Link from "next/link";
+import { LogoMark } from "@/components/Logo";
+import { Reveal } from "@/components/motion";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { Button } from "@/components/ui/button";
+import { ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 export function CTASection() {
   const { user } = useAuth();
 
   return (
-    <section className="relative py-20 md:py-28 overflow-hidden">
-      <div className="container px-4 md:px-6">
-        <div className="relative overflow-hidden rounded-3xl">
-          {/* Animated gradient background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 animate-gradient" />
-
-          {/* Pattern overlay */}
-          <div className="absolute inset-0 bg-grid opacity-10" />
-
-          {/* Glow orbs */}
-          <div className="absolute -left-20 -top-20 h-60 w-60 rounded-full bg-white/20 blur-3xl" />
-          <div className="absolute -right-20 -bottom-20 h-60 w-60 rounded-full bg-white/20 blur-3xl" />
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-40 w-40 rounded-full bg-white/10 blur-2xl animate-pulse" />
-
-          {/* Content */}
-          <div className="relative flex flex-col items-center py-16 px-6 text-center md:py-24 md:px-12">
-            {/* Floating icon */}
-            <div className="mb-6 animate-float">
-              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm shadow-lg">
-                <PiggyBank className="h-10 w-10 text-white" />
-              </div>
+    <section className="relative py-24 md:py-32">
+      <div className="container">
+        <Reveal>
+          <div className="relative isolate overflow-hidden rounded-[2rem] border border-primary/20 bg-card/60 px-6 py-16 text-center backdrop-blur-xl md:px-12 md:py-24">
+            {/* Rotating conic glow behind the content */}
+            <div aria-hidden className="absolute left-1/2 top-1/2 -z-10 h-[140%] w-[140%] -translate-x-1/2 -translate-y-1/2">
+              <div className="h-full w-full animate-border-spin bg-[conic-gradient(from_0deg,transparent_0deg,hsl(var(--brand)/0.25)_60deg,transparent_120deg,hsl(var(--brand-2)/0.2)_220deg,transparent_300deg)] blur-2xl" />
             </div>
+            <div aria-hidden className="absolute inset-0 -z-10 bg-grid mask-radial opacity-60" />
 
-            {/* Badge */}
-            <div className="mb-6 flex items-center gap-2 rounded-full bg-white/20 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm">
-              <Sparkles className="h-4 w-4" />
-              Start your journey today
-            </div>
-
-            {/* Headline */}
-            <h2 className="mb-4 max-w-3xl text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl">
-              Ready to take control of your finances?
+            <LogoMark className="mx-auto mb-8 h-14 w-14 rounded-2xl" />
+            <h2 className="mx-auto max-w-3xl text-balance font-display text-4xl font-bold tracking-tight md:text-6xl">
+              Stop guessing. <span className="gradient-text">Start knowing.</span>
             </h2>
-
-            {/* Description */}
-            <p className="mb-8 max-w-xl text-lg text-white/80 md:text-xl">
-              Join thousands of users who are already making smarter financial
-              decisions with BudWiser. It&apos;s free, secure, and takes just a minute to start.
+            <p className="mx-auto mt-5 max-w-xl text-lg text-muted-foreground">
+              Set up in two minutes. Free for personal use, and nothing changes without your OK.
             </p>
-
-            {/* CTA Buttons */}
-            {user ? (
-              <Button
-                size="lg"
-                className="gap-2 bg-white text-amber-600 hover:bg-white/90 shadow-lg shadow-black/20 px-8"
-                asChild
-              >
-                <Link href="/dashboard">
-                  Go to Dashboard
+            <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
+              <Button size="lg" variant="gradient" className="gap-2 px-8" asChild>
+                <Link href={user ? "/dashboard" : "/sign-up"}>
+                  {user ? "Open dashboard" : "Create free account"}
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
-            ) : (
-              <div className="flex flex-col gap-4 sm:flex-row">
-                <Button
-                  size="lg"
-                  className="gap-2 bg-white text-amber-600 hover:bg-white/90 shadow-lg shadow-black/20 px-8"
-                  asChild
-                >
-                  <Link href="/sign-up">
-                    Get Started Free
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
+              {!user && (
+                <Button size="lg" variant="outline" className="px-8" asChild>
+                  <Link href="/sign-in">Sign in</Link>
                 </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-white/30 bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm px-8"
-                  asChild
-                >
-                  <Link href="/sign-in">Sign In</Link>
-                </Button>
-              </div>
-            )}
-
-            {/* Trust text */}
-            <p className="mt-6 text-sm text-white/60">
-              No credit card required • Free forever • Cancel anytime
-            </p>
+              )}
+            </div>
           </div>
-        </div>
+        </Reveal>
       </div>
     </section>
   );

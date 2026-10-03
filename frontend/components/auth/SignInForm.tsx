@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ApiError } from "@/lib/api/client";
-import { Loader2, PiggyBank } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { LogoMark } from "@/components/Logo";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -53,8 +54,8 @@ export function SignInForm() {
       {isLoading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-4">
-            <PiggyBank className="h-16 w-16 animate-bounce stroke-amber-500 stroke-[1.5]" />
-            <p className="animate-pulse bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-xl font-semibold text-transparent">
+            <LogoMark className="h-16 w-16 animate-pulse rounded-2xl" />
+            <p className="gradient-text animate-pulse font-display text-xl font-semibold">
               {googleLoading ? "Connecting to Google..." : "Signing you in..."}
             </p>
           </div>
@@ -96,13 +97,10 @@ export function SignInForm() {
         </div>
       </form>
 
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
-        </div>
+      <div className="flex items-center gap-3 text-xs uppercase tracking-wider text-muted-foreground">
+        <span className="h-px flex-1 bg-border" />
+        Or continue with
+        <span className="h-px flex-1 bg-border" />
       </div>
 
       <Button variant="outline" type="button" disabled={isLoading} onClick={handleGoogleSignIn}>

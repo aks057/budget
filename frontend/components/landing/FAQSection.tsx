@@ -1,101 +1,62 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { SectionHeading } from "@/components/landing/SectionHeading";
+import { Reveal } from "@/components/motion";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { HelpCircle } from "lucide-react";
 
 const faqs = [
   {
-    question: "Is BudWiser really free?",
-    answer:
-      "Yes! BudWiser is completely free for personal use. We believe everyone should have access to great budgeting tools. There are no hidden fees or premium tiers.",
+    question: "Is Bud-Wiser free?",
+    answer: "Yes. It's free for personal use, with no premium tier and no card required.",
   },
   {
-    question: "How secure is my financial data?",
+    question: "Can the AI change my data without asking?",
     answer:
-      "Your data is protected with industry-standard encryption. We use Row Level Security (RLS) to ensure only you can access your data. We never sell or share your information with third parties.",
+      "No. The assistant can read your data through tools, but anything that writes (adding a transaction, creating a budget or goal) becomes a proposal you must confirm. Proposals expire after 15 minutes.",
   },
   {
-    question: "Can I access BudWiser on my phone?",
+    question: "Does the AI make up numbers?",
     answer:
-      "Absolutely! BudWiser is fully responsive and works great on any device - desktop, tablet, or mobile. Just open it in your browser and you&apos;re good to go.",
+      "It's instructed to only state numbers that come from tool results, and you can see every tool it called. All maths (totals, forecasts, goal plans) is done by the backend, not by the language model.",
   },
   {
-    question: "Do I need to connect my bank account?",
+    question: "Do I need to connect my bank?",
     answer:
-      "No, BudWiser doesn&apos;t require bank connections. You manually enter your transactions, giving you full control over what data you track. This also means better privacy.",
+      "No. You add transactions yourself, or tell the assistant what you spent. That keeps you in control and keeps your bank credentials out of the picture.",
   },
   {
-    question: "Can I categorize my transactions?",
+    question: "How is my data protected?",
     answer:
-      "Yes! You can create custom categories for both income and expenses. This helps you understand exactly where your money is going and identify areas to save.",
+      "Every query is scoped to your account, sessions use short-lived tokens with rotating httpOnly refresh cookies, and the AI never touches the database directly.",
   },
   {
-    question: "How do I get started?",
-    answer:
-      "Simply click &quot;Get Started Free&quot; and create an account with your email. You&apos;ll be set up in less than a minute and can start tracking your finances right away.",
+    question: "Does it work on my phone?",
+    answer: "Yes. The whole app is responsive and works in any modern mobile browser.",
   },
 ];
 
 export function FAQSection() {
   return (
-    <section className="relative py-20 md:py-28 overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/30 to-background" />
-        <div className="absolute right-0 top-1/4 h-[400px] w-[400px] rounded-full bg-amber-500/5 blur-3xl" />
-        <div className="absolute left-0 bottom-1/4 h-[300px] w-[300px] rounded-full bg-orange-500/5 blur-3xl" />
-      </div>
-
-      <div className="container px-4 md:px-6">
-        {/* Header */}
-        <div className="mx-auto mb-16 max-w-3xl text-center">
-          <Badge
-            variant="outline"
-            className="mb-4 border-amber-500/30 bg-amber-500/5"
-          >
-            <HelpCircle className="mr-1 h-3 w-3" />
-            FAQ
-          </Badge>
-          <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
-            Frequently Asked{" "}
-            <span className="gradient-text">Questions</span>
-          </h2>
-          <p className="text-lg text-muted-foreground md:text-xl">
-            Got questions? We&apos;ve got answers. If you can&apos;t find what you&apos;re
-            looking for, feel free to contact us.
-          </p>
-        </div>
-
-        {/* FAQ Accordion */}
-        <div className="mx-auto max-w-3xl">
-          <Accordion type="single" collapsible className="w-full space-y-4">
+    <section id="faq" className="relative scroll-mt-24 py-24 md:py-32">
+      <div className="container max-w-3xl">
+        <SectionHeading eyebrow="FAQ" icon={HelpCircle} title={<>Questions, <span className="gradient-text">answered</span></>} />
+        <Reveal>
+          <Accordion type="single" collapsible className="space-y-3">
             {faqs.map((faq, index) => (
               <AccordionItem
-                key={index}
+                key={faq.question}
                 value={`item-${index}`}
-                className="group rounded-xl border border-border/50 bg-gradient-to-br from-background to-muted/20 px-6 backdrop-blur-sm transition-all duration-300 hover:border-amber-500/30 hover:shadow-lg data-[state=open]:border-amber-500/30 data-[state=open]:shadow-lg"
+                className="glass-card border-b-0 px-5 transition-colors data-[state=open]:border-primary/30"
               >
-                <AccordionTrigger className="py-5 text-left text-base font-semibold hover:no-underline group-hover:text-amber-500 [&[data-state=open]]:text-amber-500">
-                  <span className="flex items-center gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-sm font-bold text-amber-500 transition-colors group-hover:bg-amber-500 group-hover:text-white [&[data-state=open]]:bg-amber-500 [&[data-state=open]]:text-white">
-                      {String(index + 1).padStart(2, "0")}
-                    </span>
-                    {faq.question}
-                  </span>
+                <AccordionTrigger className="py-5 text-left font-display text-base font-semibold hover:no-underline data-[state=open]:text-primary">
+                  {faq.question}
                 </AccordionTrigger>
-                <AccordionContent className="pb-5 pl-11 text-muted-foreground leading-relaxed">
-                  {faq.answer}
-                </AccordionContent>
+                <AccordionContent className="pb-5 leading-relaxed text-muted-foreground">{faq.answer}</AccordionContent>
               </AccordionItem>
             ))}
           </Accordion>
-        </div>
+        </Reveal>
       </div>
     </section>
   );

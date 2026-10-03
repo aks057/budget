@@ -1,11 +1,13 @@
 "use client";
 
 import HistoryPeriodSelector from "@/app/(dashboard)/_components/HistoryPeriodSelector";
+import { EmptyState } from "@/components/EmptyState";
 import SkeletonWrapper from "@/components/SkeletonWrapper";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getMonthlyHistory, getYearlyHistory } from "@/lib/api/endpoints";
 import { GetFormatterForCurrency } from "@/lib/helpers";
+import { EXPENSE_COLOR, INCOME_COLOR } from "@/lib/chartColors";
 import { Period, Timeframe } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -41,9 +43,9 @@ function History({ currency }: { currency: string }) {
   const dataAvailable = (historyDataQuery.data ?? []).some((point) => point.income > 0 || point.expense > 0);
 
   return (
-    <div className="container pb-10">
+    <section className="container">
       <div className="mb-4">
-        <h2 className="text-2xl font-bold">History</h2>
+        <h2 className="font-display text-lg font-semibold tracking-tight">History</h2>
         <p className="text-sm text-muted-foreground">
           Visualize your financial activity over time
         </p>
@@ -61,16 +63,16 @@ function History({ currency }: { currency: string }) {
             <div className="flex h-10 gap-2">
               <Badge
                 variant={"outline"}
-                className="flex items-center gap-2 text-sm"
+                className="flex items-center gap-2 rounded-full border-border/60 bg-background/40 text-xs font-medium"
               >
-                <div className="h-4 w-4 rounded-full bg-emerald-500"></div>
+                <div className="h-2.5 w-2.5 rounded-full bg-income"></div>
                 Income
               </Badge>
               <Badge
                 variant={"outline"}
-                className="flex items-center gap-2 text-sm"
+                className="flex items-center gap-2 rounded-full border-border/60 bg-background/40 text-xs font-medium"
               >
-                <div className="h-4 w-4 rounded-full bg-red-500"></div>
+                <div className="h-2.5 w-2.5 rounded-full bg-expense"></div>
                 Expense
               </Badge>
             </div>
@@ -89,12 +91,12 @@ function History({ currency }: { currency: string }) {
                     <linearGradient id="incomeBar" x1="0" y1="0" x2="0" y2="1">
                       <stop
                         offset={"0"}
-                        stopColor="#10b981"
+                        stopColor={INCOME_COLOR}
                         stopOpacity={"1"}
                       />
                       <stop
                         offset={"1"}
-                        stopColor="#10b981"
+                        stopColor={INCOME_COLOR}
                         stopOpacity={"0"}
                       />
                     </linearGradient>
@@ -102,12 +104,12 @@ function History({ currency }: { currency: string }) {
                     <linearGradient id="expenseBar" x1="0" y1="0" x2="0" y2="1">
                       <stop
                         offset={"0"}
-                        stopColor="#ef4444"
+                        stopColor={EXPENSE_COLOR}
                         stopOpacity={"1"}
                       />
                       <stop
                         offset={"1"}
-                        stopColor="#ef4444"
+                        stopColor={EXPENSE_COLOR}
                         stopOpacity={"0"}
                       />
                     </linearGradient>
@@ -146,14 +148,14 @@ function History({ currency }: { currency: string }) {
                     dataKey={"income"}
                     label="Income"
                     fill="url(#incomeBar)"
-                    radius={4}
+                    radius={[6, 6, 0, 0]}
                     className="cursor-pointer"
                   />
                   <Bar
                     dataKey={"expense"}
                     label="Expense"
                     fill="url(#expenseBar)"
-                    radius={4}
+                    radius={[6, 6, 0, 0]}
                     className="cursor-pointer"
                   />
                   <Tooltip
@@ -166,18 +168,17 @@ function History({ currency }: { currency: string }) {
               </ResponsiveContainer>
             )}
             {!dataAvailable && (
-              <div className="flex h-[300px] flex-col items-center justify-center rounded-lg border border-dashed">
-                <BarChart3 className="h-12 w-12 text-muted-foreground/50" />
-                <p className="mt-4 text-lg font-medium">No data available</p>
-                <p className="text-sm text-muted-foreground">
-                  Try selecting a different period or add some transactions
-                </p>
-              </div>
+              <EmptyState
+                className="h-[300px]"
+                icon={BarChart3}
+                title="No data for this period"
+                description="Try a different period, or add some transactions."
+              />
             )}
           </SkeletonWrapper>
         </CardContent>
       </Card>
-    </div>
+    </section>
   );
 }
 
@@ -190,20 +191,20 @@ function CustomTooltip({ active, payload, formatter }: any) {
   const { expense, income } = data;
 
   return (
-    <div className="min-w-[300px] rounded border bg-background p-4">
+    <div className="min-w-[260px] space-y-1 rounded-xl border border-border/60 bg-card/90 p-4 shadow-glass backdrop-blur-xl">
       <TooltipRow
         formatter={formatter}
         label="Expense"
         value={expense}
-        bgColor="bg-red-500"
-        textColor="text-red-500"
+        bgColor="bg-expense"
+        textColor="text-expense"
       />
       <TooltipRow
         formatter={formatter}
         label="Income"
         value={income}
-        bgColor="bg-emerald-500"
-        textColor="text-emerald-500"
+        bgColor="bg-income"
+        textColor="text-income"
       />
       <TooltipRow
         formatter={formatter}

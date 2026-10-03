@@ -1,6 +1,9 @@
+"use client";
+
 import { stepLabel } from "@/lib/agent/tools";
 import type { ToolStatus } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
+import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle, CheckCircle2, Hand, Loader2 } from "lucide-react";
 
 export interface ToolStep {
@@ -16,16 +19,35 @@ export function ToolTimeline({ steps }: { steps: ToolStep[] }) {
   return (
     <ol className="space-y-1.5" aria-label="Agent steps">
       {steps.map((step, index) => (
-        <li key={index} className="flex items-center gap-2 text-xs text-muted-foreground">
-          <StepIcon status={step.status} />
+        <motion.li
+          key={index}
+          initial={{ opacity: 0, x: -8 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3 }}
+          className="flex items-center gap-2 text-xs text-muted-foreground"
+        >
+          <span className="relative flex h-3.5 w-3.5 items-center justify-center">
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.span
+                key={step.status ?? "running"}
+                initial={{ scale: 0.4, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.4, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                className="absolute inset-0 flex items-center justify-center"
+              >
+                <StepIcon status={step.status} />
+              </motion.span>
+            </AnimatePresence>
+          </span>
           <span className={cn(step.status === "REJECTED" || step.status === "ERROR" ? "line-through opacity-70" : "")}>
             {stepLabel(step.name)}
           </span>
-          {step.status === "PENDING_CONFIRMATION" && <span className="text-amber-500">· needs your OK</span>}
+          {step.status === "PENDING_CONFIRMATION" && <span className="text-warning">· needs your OK</span>}
           {step.latencyMs !== undefined && step.status === "SUCCESS" && (
             <span className="tabular-nums opacity-60">{step.latencyMs} ms</span>
           )}
-        </li>
+        </motion.li>
       ))}
     </ol>
   );
@@ -34,12 +56,12 @@ export function ToolTimeline({ steps }: { steps: ToolStep[] }) {
 function StepIcon({ status }: { status?: ToolStatus }) {
   switch (status) {
     case undefined:
-      return <Loader2 className="h-3.5 w-3.5 animate-spin" aria-label="running" />;
+      return <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" aria-label="running" />;
     case "SUCCESS":
-      return <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" aria-label="done" />;
+      return <CheckCircle2 className="h-3.5 w-3.5 text-income" aria-label="done" />;
     case "PENDING_CONFIRMATION":
-      return <Hand className="h-3.5 w-3.5 text-amber-500" aria-label="awaiting confirmation" />;
+      return <Hand className="h-3.5 w-3.5 text-warning" aria-label="awaiting confirmation" />;
     default:
-      return <AlertTriangle className="h-3.5 w-3.5 text-red-400" aria-label="could not run" />;
+      return <AlertTriangle className="h-3.5 w-3.5 text-expense" aria-label="could not run" />;
   }
 }

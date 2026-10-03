@@ -5,9 +5,9 @@ export default function PrivacyPage() {
   return (
     <div className="container max-w-4xl py-12 md:py-20">
       <div className="mb-8 text-center">
-        <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-amber-500/10 px-4 py-2">
-          <Shield className="h-5 w-5 text-amber-500" />
-          <span className="text-sm font-medium text-amber-500">Legal</span>
+        <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2">
+          <Shield className="h-5 w-5 text-primary" />
+          <span className="text-sm font-medium text-primary">Legal</span>
         </div>
         <h1 className="mb-4 text-4xl font-bold">Privacy Policy</h1>
         <p className="text-muted-foreground">
@@ -109,7 +109,7 @@ export default function PrivacyPage() {
               contact us at{" "}
               <a
                 href="mailto:privacy@budwiser.app"
-                className="text-amber-500 hover:underline"
+                className="text-primary hover:underline"
               >
                 privacy@budwiser.app
               </a>

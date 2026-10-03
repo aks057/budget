@@ -1,206 +1,171 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Sparkles, TrendingUp, Shield, Zap } from "lucide-react";
-import Link from "next/link";
+import { DashboardMockup } from "@/components/landing/DashboardMockup";
+import { Aurora, EASE_OUT, TiltCard } from "@/components/motion";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { Button } from "@/components/ui/button";
+import { AnimatePresence, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { ArrowRight, BellRing, CheckCircle2, ShieldCheck, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+
+const ROTATING_WORDS = ["explained.", "on budget.", "on autopilot.", "growing."];
+
+function RotatingWord() {
+  const [index, setIndex] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setIndex((i) => (i + 1) % ROTATING_WORDS.length), 2600);
+    return () => clearInterval(timer);
+  }, []);
+  return (
+    <span className="relative inline-grid">
+      {/* Invisible longest word reserves the width, so the line never jumps. */}
+      <span className="invisible col-start-1 row-start-1">on autopilot.</span>
+      <AnimatePresence mode="popLayout" initial={false}>
+        <motion.span
+          key={ROTATING_WORDS[index]}
+          className="gradient-text col-start-1 row-start-1"
+          initial={{ y: "70%", opacity: 0, filter: "blur(8px)" }}
+          animate={{ y: "0%", opacity: 1, filter: "blur(0px)" }}
+          exit={{ y: "-70%", opacity: 0, filter: "blur(8px)" }}
+          transition={{ duration: 0.55, ease: EASE_OUT }}
+        >
+          {ROTATING_WORDS[index]}
+        </motion.span>
+      </AnimatePresence>
+    </span>
+  );
+}
+
+const fadeUp = (delay: number) => ({
+  initial: { opacity: 0, y: 24, filter: "blur(8px)" },
+  animate: { opacity: 1, y: 0, filter: "blur(0px)" },
+  transition: { duration: 0.8, delay, ease: EASE_OUT },
+});
 
 export function HeroSection() {
   const { user } = useAuth();
+  const reduceMotion = useReducedMotion();
+  const sectionRef = useRef<HTMLElement>(null);
+
+  // Scroll-driven: the copy drifts up and fades while the product preview tilts flat and comes forward.
+  const { scrollYProgress } = useScroll({ target: sectionRef, offset: ["start start", "end start"] });
+  const copyY = useTransform(scrollYProgress, [0, 0.5], [0, -90]);
+  const copyOpacity = useTransform(scrollYProgress, [0, 0.4], [1, 0]);
+  const previewRotate = useTransform(scrollYProgress, [0, 0.35], [22, 0]);
+  const previewScale = useTransform(scrollYProgress, [0, 0.35], [0.92, 1.02]);
+  const previewY = useTransform(scrollYProgress, [0, 0.35], [0, -40]);
 
   return (
-    <section className="relative min-h-[90vh] overflow-hidden">
-      {/* Animated background gradients */}
-      <div className="absolute inset-0 -z-10">
-        {/* Primary gradient orb */}
-        <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2">
-          <div className="h-[600px] w-[600px] rounded-full bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/20 blur-3xl animate-pulse" />
-        </div>
-        {/* Secondary gradient orbs */}
-        <div className="absolute right-0 top-1/4">
-          <div className="h-[400px] w-[400px] rounded-full bg-amber-500/10 blur-3xl animate-float" />
-        </div>
-        <div className="absolute left-0 bottom-0">
-          <div className="h-[300px] w-[300px] rounded-full bg-orange-500/10 blur-3xl" />
-        </div>
-        {/* Grid pattern */}
-        <div className="absolute inset-0 bg-grid opacity-50" />
-      </div>
+    <section ref={sectionRef} className="relative overflow-hidden pb-24 pt-16 md:pb-36 md:pt-24">
+      <Aurora intensity="strong" />
 
-      <div className="container relative px-4 md:px-6 pt-20 pb-16 md:pt-32 md:pb-24">
-        <div className="flex flex-col items-center space-y-8 text-center">
-          {/* Announcement Badge */}
-          <div className="animate-fade-up">
-            <Badge
-              variant="outline"
-              className="gap-2 px-4 py-2 border-amber-500/30 bg-amber-500/5 backdrop-blur-sm hover:bg-amber-500/10 transition-colors cursor-default"
-            >
-              <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-              <span className="text-sm font-medium">Smart budgeting made simple</span>
-              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-            </Badge>
-          </div>
+      <motion.div
+        className="container relative flex flex-col items-center text-center"
+        style={reduceMotion ? undefined : { y: copyY, opacity: copyOpacity }}
+      >
+        <motion.div {...fadeUp(0)}>
+          <Link
+            href="#ai-demo"
+            className="group inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 py-1 pl-1 pr-3 text-sm text-primary backdrop-blur transition-colors hover:bg-primary/15"
+          >
+            <span className="rounded-full bg-brand-gradient px-2 py-0.5 text-xs font-semibold text-brand-foreground">New</span>
+            An AI agent that works on your real numbers
+            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+          </Link>
+        </motion.div>
 
-          {/* Main Headline */}
-          <div className="space-y-4 max-w-4xl">
-            <h1 className="animate-fade-up animation-delay-100 text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
-              Take Control of Your{" "}
-              <span className="relative">
-                <span className="gradient-text">Finances</span>
-                <svg
-                  className="absolute -bottom-2 left-0 w-full"
-                  viewBox="0 0 300 12"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M2 10C50 4 100 2 150 6C200 10 250 4 298 8"
-                    stroke="url(#gradient)"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    className="animate-pulse"
-                  />
-                  <defs>
-                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#f59e0b" />
-                      <stop offset="100%" stopColor="#f97316" />
-                    </linearGradient>
-                  </defs>
-                </svg>
-              </span>
-            </h1>
+        <motion.h1
+          {...fadeUp(0.1)}
+          className="mt-8 max-w-5xl text-balance font-display text-5xl font-bold leading-[1.05] tracking-tight sm:text-6xl md:text-7xl lg:text-8xl"
+        >
+          Your money, <RotatingWord />
+        </motion.h1>
 
-            <p className="animate-fade-up animation-delay-200 mx-auto max-w-2xl text-lg text-muted-foreground md:text-xl leading-relaxed">
-              Track expenses, manage categories, and visualize your spending habits.
-              BudWiser helps you make smarter financial decisions with powerful
-              insights and intuitive tools.
-            </p>
-          </div>
+        <motion.p {...fadeUp(0.2)} className="mt-6 max-w-2xl text-pretty text-lg text-muted-foreground md:text-xl">
+          Bud-Wiser tracks your spending, keeps budgets honest and answers questions about your finances in plain
+          English. It even logs expenses for you, but only after you confirm.
+        </motion.p>
 
-          {/* CTA Buttons */}
-          <div className="animate-fade-up animation-delay-300 flex flex-col gap-4 sm:flex-row">
-            {user ? (
-              <Button
-                size="lg"
-                className="gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 transition-all duration-300 px-8"
-                asChild
-              >
-                <Link href="/dashboard">
-                  Go to Dashboard
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-            ) : (
-              <>
-                <Button
-                  size="lg"
-                  className="gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 transition-all duration-300 px-8"
-                  asChild
-                >
-                  <Link href="/sign-up">
-                    Get Started Free
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-border/50 hover:bg-accent/50 backdrop-blur-sm px-8"
-                  asChild
-                >
-                  <Link href="#features">Learn More</Link>
-                </Button>
-              </>
-            )}
-          </div>
+        <motion.div {...fadeUp(0.3)} className="mt-10 flex flex-col gap-3 sm:flex-row">
+          <Button size="lg" variant="gradient" className="gap-2 px-8" asChild>
+            <Link href={user ? "/dashboard" : "/sign-up"}>
+              {user ? "Open dashboard" : "Start free"}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
+          <Button size="lg" variant="outline" className="gap-2 px-8" asChild>
+            <Link href="#ai-demo">
+              <Sparkles className="h-4 w-4 text-primary" /> See the AI in action
+            </Link>
+          </Button>
+        </motion.div>
 
-          {/* Trust Indicators */}
-          <div className="animate-fade-up animation-delay-400 flex flex-col items-center gap-4 pt-4">
-            <p className="text-sm text-muted-foreground">
-              No credit card required • Free forever for personal use
-            </p>
-            <div className="flex items-center gap-6 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/10">
-                  <Shield className="h-4 w-4 text-emerald-500" />
-                </div>
-                <span>Secure</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500/10">
-                  <Zap className="h-4 w-4 text-blue-500" />
-                </div>
-                <span>Fast</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/10">
-                  <TrendingUp className="h-4 w-4 text-amber-500" />
-                </div>
-                <span>Insightful</span>
-              </div>
-            </div>
-          </div>
+        <motion.ul {...fadeUp(0.4)} className="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
+          {["Free for personal use", "No bank linking required", "Nothing changes without your OK"].map((item) => (
+            <li key={item} className="flex items-center gap-1.5">
+              <CheckCircle2 className="h-4 w-4 text-primary" /> {item}
+            </li>
+          ))}
+        </motion.ul>
+      </motion.div>
 
-          {/* Hero Visual/Preview */}
-          <div className="animate-fade-up animation-delay-500 relative mt-8 w-full max-w-5xl">
-            <div className="relative rounded-xl border border-border/50 bg-gradient-to-b from-background to-muted/20 p-2 shadow-2xl backdrop-blur-sm">
-              {/* Browser chrome */}
-              <div className="flex items-center gap-2 border-b border-border/50 px-4 py-3">
-                <div className="flex gap-1.5">
-                  <div className="h-3 w-3 rounded-full bg-red-500/80" />
-                  <div className="h-3 w-3 rounded-full bg-yellow-500/80" />
-                  <div className="h-3 w-3 rounded-full bg-green-500/80" />
-                </div>
-                <div className="flex-1 flex justify-center">
-                  <div className="flex items-center gap-2 rounded-md bg-muted/50 px-3 py-1 text-xs text-muted-foreground">
-                    <Shield className="h-3 w-3" />
-                    budwiser.app/dashboard
-                  </div>
-                </div>
-              </div>
-              {/* Dashboard preview */}
-              <div className="relative aspect-[16/9] overflow-hidden rounded-b-lg bg-muted/30">
-                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-orange-500/5" />
-                <div className="p-6 space-y-4">
-                  {/* Stats row */}
-                  <div className="grid grid-cols-3 gap-4">
-                    {[
-                      { label: "Total Balance", value: "₹1,24,500", color: "text-foreground" },
-                      { label: "Income", value: "+₹85,000", color: "text-emerald-500" },
-                      { label: "Expenses", value: "-₹42,300", color: "text-red-500" },
-                    ].map((stat, i) => (
-                      <div
-                        key={i}
-                        className="rounded-lg border border-border/30 bg-card/50 backdrop-blur-sm p-4"
-                      >
-                        <p className="text-xs text-muted-foreground">{stat.label}</p>
-                        <p className={`text-xl font-bold ${stat.color}`}>{stat.value}</p>
-                      </div>
-                    ))}
-                  </div>
-                  {/* Chart placeholder */}
-                  <div className="rounded-lg border border-border/30 bg-card/50 backdrop-blur-sm p-4 h-32">
-                    <div className="flex items-end justify-between h-full gap-2">
-                      {[40, 65, 45, 80, 55, 70, 90, 60, 75, 85, 50, 95].map((height, i) => (
-                        <div
-                          key={i}
-                          className="flex-1 rounded-t bg-gradient-to-t from-amber-500/50 to-amber-500/80"
-                          style={{ height: `${height}%` }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                {/* Overlay gradient */}
-                <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background to-transparent" />
-              </div>
-            </div>
-            {/* Glow effect behind preview */}
-            <div className="absolute -inset-4 -z-10 rounded-2xl bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/20 blur-2xl opacity-50" />
-          </div>
-        </div>
-      </div>
+      {/* Product preview */}
+      <motion.div
+        initial={{ opacity: 0, y: 60 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1, delay: 0.45, ease: EASE_OUT }}
+        className="container relative mt-16 max-w-6xl md:mt-20"
+        style={{ perspective: 1600 }}
+      >
+        <motion.div
+          style={reduceMotion ? undefined : { rotateX: previewRotate, scale: previewScale, y: previewY, transformOrigin: "50% 0%" }}
+          className="relative"
+        >
+          <div aria-hidden className="absolute -inset-x-10 -top-10 bottom-0 -z-10 rounded-[3rem] bg-brand-gradient opacity-20 blur-3xl" />
+          <TiltCard maxTilt={4} className="rounded-2xl">
+            <DashboardMockup />
+          </TiltCard>
+
+          {/* Floating chips */}
+          <FloatingChip className="-left-4 top-1/4 hidden md:flex" delay={1.1} icon={BellRing} tone="text-warning">
+            Food budget at 85%
+          </FloatingChip>
+          <FloatingChip className="-right-6 top-[55%] hidden md:flex" delay={1.35} icon={ShieldCheck} tone="text-primary">
+            ₹450 lunch logged. Confirmed.
+          </FloatingChip>
+        </motion.div>
+      </motion.div>
     </section>
+  );
+}
+
+function FloatingChip({
+  className,
+  delay,
+  icon: Icon,
+  tone,
+  children,
+}: {
+  className: string;
+  delay: number;
+  icon: typeof BellRing;
+  tone: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <motion.div
+      className={`absolute z-10 items-center gap-2 rounded-xl border border-white/10 bg-card/80 px-3.5 py-2.5 text-sm shadow-glass backdrop-blur-xl ${className}`}
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1, y: [0, -8, 0] }}
+      transition={{
+        opacity: { delay, duration: 0.5 },
+        scale: { delay, duration: 0.5, ease: EASE_OUT },
+        y: { delay: delay + 0.5, duration: 4, repeat: Infinity, ease: "easeInOut" },
+      }}
+    >
+      <Icon className={`h-4 w-4 ${tone}`} />
+      {children}
+    </motion.div>
   );
 }

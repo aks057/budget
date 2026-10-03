@@ -1,4 +1,4 @@
-import { PiggyBank } from "lucide-react";
+import Logo from "@/components/Logo";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 
@@ -58,21 +58,16 @@ const socialLinks = [
 
 export default function Footer() {
   return (
-    <footer className="border-t bg-card">
+    <footer className="border-t border-border/60 bg-background/60 backdrop-blur-xl">
       <div className="container py-12 md:py-16">
         {/* Main Footer Content */}
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4 lg:grid-cols-5">
           {/* Brand Section */}
           <div className="col-span-2 lg:col-span-2">
-            <Link href="/" className="flex items-center gap-2">
-              <PiggyBank className="h-8 w-8 stroke-amber-500" />
-              <span className="bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-xl font-bold text-transparent">
-                BudWiser
-              </span>
-            </Link>
+            <Logo />
             <p className="mt-4 max-w-xs text-sm text-muted-foreground">
-              Take control of your finances with smart budgeting. Track expenses,
-              manage categories, and achieve your financial goals.
+              An AI financial assistant that explains your spending, keeps budgets on track and helps you reach
+              your goals.
             </p>
             {/* Social Links */}
             <div className="mt-6 flex gap-4">
@@ -80,7 +75,7 @@ export default function Footer() {
                 <Link
                   key={social.name}
                   href={social.href}
-                  className="text-muted-foreground transition-colors hover:text-amber-500"
+                  className="text-muted-foreground transition-colors hover:text-primary"
                   aria-label={social.name}
                 >
                   {social.icon}
@@ -146,11 +141,11 @@ export default function Footer() {
         {/* Bottom Section */}
         <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} BudWiser. All rights reserved.
+            &copy; {new Date().getFullYear()} Bud-Wiser. All rights reserved.
           </p>
           <p className="text-sm text-muted-foreground">
             Made with{" "}
-            <span className="text-red-500">&hearts;</span> for smart budgeters
+            <span className="text-expense">&hearts;</span> for smart budgeters
           </p>
         </div>
       </div>

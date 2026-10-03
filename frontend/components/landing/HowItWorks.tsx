@@ -1,144 +1,61 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { UserPlus, Receipt, LineChart, ArrowRight } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { SectionHeading } from "@/components/landing/SectionHeading";
+import { EASE_OUT } from "@/components/motion";
+import { motion, useReducedMotion, useScroll, useSpring } from "framer-motion";
+import { MessageSquareText, Rocket, UserPlus, Wallet } from "lucide-react";
+import { useRef } from "react";
 
-const steps = [
-  {
-    icon: UserPlus,
-    step: "01",
-    title: "Create Account",
-    description:
-      "Sign up in seconds with just your email or Google account. No credit card required to get started.",
-    color: "from-emerald-500 to-emerald-600",
-    iconBg: "bg-emerald-500/10 group-hover:bg-emerald-500",
-    iconColor: "text-emerald-500 group-hover:text-white",
-  },
-  {
-    icon: Receipt,
-    step: "02",
-    title: "Add Transactions",
-    description:
-      "Log your income and expenses with our intuitive interface. Categorize them for better organization and tracking.",
-    color: "from-amber-500 to-orange-500",
-    iconBg: "bg-amber-500/10 group-hover:bg-amber-500",
-    iconColor: "text-amber-500 group-hover:text-white",
-  },
-  {
-    icon: LineChart,
-    step: "03",
-    title: "Get Insights",
-    description:
-      "View beautiful charts and analytics to understand your spending patterns and make smarter decisions.",
-    color: "from-blue-500 to-blue-600",
-    iconBg: "bg-blue-500/10 group-hover:bg-blue-500",
-    iconColor: "text-blue-500 group-hover:text-white",
-  },
+const STEPS = [
+  { icon: UserPlus, title: "Create your account", body: "Sign up with email or Google and pick your currency. Default categories are ready instantly." },
+  { icon: Wallet, title: "Add what you earn and spend", body: "Log transactions in seconds, or just tell the assistant: \"spent 450 on lunch\"." },
+  { icon: MessageSquareText, title: "Ask anything", body: "\"Why is this month higher?\", \"Can I afford a trip?\" Answers come from your real data." },
+  { icon: Rocket, title: "Let it watch your back", body: "Budgets, goals and a daily check send you alerts before small leaks become big ones." },
 ];
 
 export function HowItWorks() {
+  const listRef = useRef<HTMLOListElement>(null);
+  const reduceMotion = useReducedMotion();
+  // The connecting line draws itself as the steps scroll through the viewport.
+  const { scrollYProgress } = useScroll({ target: listRef, offset: ["start 75%", "end 55%"] });
+  const lineScale = useSpring(scrollYProgress, { stiffness: 120, damping: 30 });
+
   return (
-    <section className="relative py-20 md:py-28 overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-dots opacity-50" />
-      </div>
+    <section id="how" className="relative scroll-mt-24 py-24 md:py-32">
+      <div className="container max-w-4xl">
+        <SectionHeading eyebrow="How it works" icon={Rocket} title={<>Up and running in <span className="gradient-text">two minutes</span></>} />
 
-      <div className="container px-4 md:px-6">
-        {/* Header */}
-        <div className="mx-auto mb-16 max-w-3xl text-center">
-          <Badge
-            variant="outline"
-            className="mb-4 border-amber-500/30 bg-amber-500/5"
-          >
-            How It Works
-          </Badge>
-          <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
-            Get started in{" "}
-            <span className="gradient-text">three simple steps</span>
-          </h2>
-          <p className="text-lg text-muted-foreground md:text-xl">
-            It takes less than a minute to start tracking your finances with
-            BudWiser.
-          </p>
-        </div>
-
-        {/* Steps */}
-        <div className="relative max-w-5xl mx-auto">
-          {/* Connection line - desktop */}
-          <div className="absolute left-0 right-0 top-24 hidden h-0.5 bg-gradient-to-r from-emerald-500/50 via-amber-500/50 to-blue-500/50 lg:block" />
-
-          {/* Connection line dots */}
-          <div className="absolute left-0 right-0 top-24 hidden lg:flex justify-between px-[calc(16.67%-10px)]">
-            {[0, 1].map((i) => (
-              <ArrowRight key={i} className="h-4 w-4 text-muted-foreground/50" />
-            ))}
-          </div>
-
-          <div className="grid gap-8 lg:grid-cols-3">
-            {steps.map((item, index) => (
-              <div
-                key={item.title}
-                className="group relative"
-                style={{ animationDelay: `${index * 150}ms` }}
+        <div className="relative">
+          <div aria-hidden className="absolute bottom-6 left-6 top-6 w-px bg-border md:left-1/2" />
+          <motion.div
+            aria-hidden
+            className="absolute bottom-6 left-6 top-6 w-px origin-top bg-gradient-to-b from-brand to-brand-2 shadow-glow md:left-1/2"
+            style={reduceMotion ? undefined : { scaleY: lineScale }}
+          />
+        <ol ref={listRef} className="relative space-y-10 md:space-y-14">
+          {STEPS.map((step, index) => {
+            const right = index % 2 === 1;
+            return (
+              <motion.li
+                key={step.title}
+                initial={{ opacity: 0, x: right ? 40 : -40 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: "-15% 0px" }}
+                transition={{ duration: 0.7, ease: EASE_OUT }}
+                className="relative grid grid-cols-[3rem_1fr] items-start gap-5 md:grid-cols-2 md:gap-16"
               >
-                {/* Card */}
-                <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-background to-muted/20 p-6 backdrop-blur-sm transition-all duration-300 hover:border-border hover:shadow-xl hover:-translate-y-1">
-                  {/* Step number badge */}
-                  <div className="absolute -top-3 left-6">
-                    <div className={cn(
-                      "flex h-7 w-12 items-center justify-center rounded-full bg-gradient-to-r text-xs font-bold text-white shadow-lg",
-                      item.color
-                    )}>
-                      Step {item.step}
-                    </div>
-                  </div>
-
-                  {/* Content */}
-                  <div className="pt-4">
-                    {/* Icon */}
-                    <div
-                      className={cn(
-                        "mb-4 flex h-16 w-16 items-center justify-center rounded-2xl transition-all duration-300 group-hover:scale-110",
-                        item.iconBg
-                      )}
-                    >
-                      <item.icon className={cn("h-8 w-8 transition-colors", item.iconColor)} />
-                    </div>
-
-                    {/* Title */}
-                    <h3 className="mb-2 text-xl font-semibold tracking-tight">
-                      {item.title}
-                    </h3>
-
-                    {/* Description */}
-                    <p className="text-muted-foreground leading-relaxed">
-                      {item.description}
-                    </p>
-                  </div>
-
-                  {/* Shimmer effect */}
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                    <div className="absolute inset-0 shimmer" />
-                  </div>
-
-                  {/* Decorative gradient */}
-                  <div className={cn(
-                    "absolute -right-12 -top-12 h-32 w-32 rounded-full bg-gradient-to-br opacity-0 group-hover:opacity-20 transition-opacity blur-2xl",
-                    item.color
-                  )} />
+                <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-2xl border border-primary/30 bg-card shadow-glow md:absolute md:left-1/2 md:-translate-x-1/2">
+                  <step.icon className="h-5 w-5 text-primary" />
                 </div>
-
-                {/* Mobile connector */}
-                {index < steps.length - 1 && (
-                  <div className="flex justify-center py-4 lg:hidden">
-                    <div className="h-8 w-0.5 bg-gradient-to-b from-border to-transparent" />
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+                <div className={`glass-card p-5 md:p-6 ${right ? "md:col-start-2 md:ml-8" : "md:col-start-1 md:mr-8 md:text-right"}`}>
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-primary">Step {index + 1}</p>
+                  <h3 className="mb-2 font-display text-xl font-semibold">{step.title}</h3>
+                  <p className="text-sm leading-relaxed text-muted-foreground">{step.body}</p>
+                </div>
+              </motion.li>
+            );
+          })}
+        </ol>
         </div>
       </div>
     </section>

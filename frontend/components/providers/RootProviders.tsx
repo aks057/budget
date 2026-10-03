@@ -2,6 +2,7 @@
 
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { ApiError } from "@/lib/api/client";
+import { MotionConfig } from "framer-motion";
 import { ThemeProvider } from "next-themes";
 import React, { ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -25,7 +26,8 @@ function RootProviders({ children }: { children: ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-          {children}
+          {/* "user": every Framer Motion animation honours the OS reduce-motion setting. */}
+          <MotionConfig reducedMotion="user">{children}</MotionConfig>
         </ThemeProvider>
       </AuthProvider>
       <ReactQueryDevtools initialIsOpen={false} />

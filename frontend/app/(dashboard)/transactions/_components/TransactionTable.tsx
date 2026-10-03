@@ -94,9 +94,9 @@ function buildColumns(formatter: Intl.NumberFormat): ColumnDef<Transaction>[] {
       cell: ({ row }) => (
         <div
           className={cn(
-            "capitalize rounded-lg text-center p-2",
-            row.original.type === "income" && "bg-emerald-400/10 text-emerald-500",
-            row.original.type === "expense" && "bg-red-400/10 text-red-500"
+            "capitalize rounded-full px-2.5 py-1 text-center text-xs font-semibold",
+            row.original.type === "income" && "bg-income/10 text-income",
+            row.original.type === "expense" && "bg-expense/10 text-expense"
           )}
         >
           {row.original.type}
@@ -107,7 +107,7 @@ function buildColumns(formatter: Intl.NumberFormat): ColumnDef<Transaction>[] {
       accessorKey: "amount",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Amount" />,
       cell: ({ row }) => (
-        <p className="text-md rounded-lg bg-gray-400/5 p-2 text-center font-medium">
+        <p className={cn("text-right font-display font-semibold tabular-nums", row.original.type === "income" ? "text-income" : "text-foreground")}>
           {formatter.format(row.original.amount)}
         </p>
       ),
@@ -252,7 +252,7 @@ function TransactionTable({ from, to }: Props) {
         </div>
       </div>
       <SkeletonWrapper isLoading={history.isLoading}>
-        <div className={cn("rounded-md border", history.isPlaceholderData && "opacity-60")}>
+        <div className={cn("overflow-hidden rounded-2xl border bg-card/60 shadow-glass backdrop-blur-xl transition-opacity", history.isPlaceholderData && "opacity-60")}>
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
@@ -265,16 +265,16 @@ function TransactionTable({ from, to }: Props) {
                 </TableRow>
               ))}
             </TableHeader>
-            <TableBody>
+            <TableBody key={`${pagination.pageIndex}-${type ?? ""}-${categoryId ?? ""}`} className="animate-in fade-in-0 slide-in-from-bottom-1 duration-300">
               {history.isError ? (
                 <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center text-red-500">
+                  <TableCell colSpan={columns.length} className="h-24 text-center text-expense">
                     Could not load transactions.
                   </TableCell>
                 </TableRow>
               ) : table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                  <TableRow key={row.id} data-state={row.getIsSelected() && "selected"} className="transition-colors hover:bg-primary/5">
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
                     ))}

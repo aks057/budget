@@ -24,12 +24,12 @@ export function ActionCard({ action, state, onConfirm, onReject }: Props) {
   return (
     <div
       className={cn(
-        "rounded-lg border p-3",
-        state.phase === "pending" || working ? "border-amber-500/50 bg-amber-500/5" : "bg-muted/30"
+        "rounded-xl border p-3.5 transition-colors duration-300",
+        state.phase === "pending" || working ? "border-warning/50 bg-warning/5" : "bg-muted/30"
       )}
     >
       <div className="flex items-start gap-3">
-        <ShieldQuestion className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
+        <ShieldQuestion className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold">{actionTitle(action.toolName)}</p>
           <p className="text-sm text-muted-foreground">{action.summary}</p>
@@ -55,7 +55,7 @@ export function ActionCard({ action, state, onConfirm, onReject }: Props) {
             </div>
           )}
           {state.phase === "executed" && (
-            <p className="mt-2 flex items-center gap-1.5 text-sm text-emerald-500">
+            <p className="mt-2 flex items-center gap-1.5 text-sm text-income">
               <CheckCircle2 className="h-4 w-4" /> {state.message || "Done"}
             </p>
           )}
@@ -65,7 +65,7 @@ export function ActionCard({ action, state, onConfirm, onReject }: Props) {
             </p>
           )}
           {state.phase === "failed" && (
-            <p className="mt-2 flex items-center gap-1.5 text-sm text-red-500">
+            <p className="mt-2 flex items-center gap-1.5 text-sm text-expense">
               <XCircle className="h-4 w-4" /> {state.message}
             </p>
           )}
