@@ -1,0 +1,12 @@
+budwiser:
+  security:
+    jwt:
+      generate-dev-keys: true
+    cookie:
+      secure: true
+  rate-limit:
+    # Every integration test registers users from the same address; keep auth limits out of the way.
+    # Agent limits stay at production values and are tested in RateLimitIT.
+    auth:
+      capacity: 100000
+      period: 1m

@@ -1,0 +1,83 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '4.1.1'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.budwiser'
+version = '0.0.1-SNAPSHOT'
+description = 'Bud-Wiser AI financial agent backend'
+
+ext {
+	mapstructVersion = '1.6.3'
+	lombokMapstructBindingVersion = '0.2.0'
+	bucket4jVersion = '8.14.0'
+}
+
+// Compile to Java 21 bytecode on any newer JDK (local dev uses JDK 25, runtime image is JRE 21)
+tasks.withType(JavaCompile).configureEach {
+	options.release = 21
+}
+
+tasks.named('compileJava') {
+	options.compilerArgs += ['-Amapstruct.defaultComponentModel=spring']
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-liquibase'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-security-oauth2-client'
+	implementation 'org.springframework.boot:spring-boot-starter-security-oauth2-resource-server'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	implementation "org.mapstruct:mapstruct:${mapstructVersion}"
+	implementation "com.bucket4j:bucket4j_jdk17-core:${bucket4jVersion}"
+	implementation 'com.github.ben-manes.caffeine:caffeine'
+	compileOnly 'org.projectlombok:lombok'
+	runtimeOnly 'org.postgresql:postgresql'
+	annotationProcessor 'org.projectlombok:lombok'
+	annotationProcessor "org.projectlombok:lombok-mapstruct-binding:${lombokMapstructBindingVersion}"
+	annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+	testImplementation 'org.springframework.boot:spring-boot-starter-actuator-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-liquibase-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-security-oauth2-client-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-security-oauth2-resource-server-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-validation-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+	testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
+	testImplementation 'org.testcontainers:testcontainers-postgresql'
+	testCompileOnly 'org.projectlombok:lombok'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	testAnnotationProcessor 'org.projectlombok:lombok'
+}
+
+tasks.named('test') {
+	useJUnitPlatform {
+		excludeTags 'eval'
+	}
+}
+
+// Agent evals against a REAL LLM (needs GROQ_API_KEY and/or HF_TOKEN). Run manually: ./gradlew evalTest
+tasks.register('evalTest', Test) {
+	description = 'Runs agent evaluations against a real LLM provider.'
+	group = 'verification'
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	useJUnitPlatform {
+		includeTags 'eval'
+	}
+	testLogging {
+		events 'passed', 'failed'
+		showStandardStreams = true
+	}
+	outputs.upToDateWhen { false }
+}

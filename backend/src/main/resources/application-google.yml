@@ -1,0 +1,11 @@
+# Enables "Continue with Google". Activate with SPRING_PROFILES_ACTIVE=...,google once credentials exist.
+# Authorized redirect URI to register in Google Cloud Console: {baseUrl}/login/oauth2/code/google
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope: openid,email,profile

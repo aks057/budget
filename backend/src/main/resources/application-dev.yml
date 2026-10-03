@@ -1,0 +1,7 @@
+# Local development (default profile). Never used in production.
+budwiser:
+  security:
+    jwt:
+      generate-dev-keys: true
+    cookie:
+      secure: false

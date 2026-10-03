@@ -1,0 +1,80 @@
+spring:
+  application:
+    name: budwiser-backend
+  profiles:
+    # Local runs default to dev; production sets SPRING_PROFILES_ACTIVE=prod[,google].
+    default: dev
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/budwiser}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:admin}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+server:
+  port: ${PORT:8080}
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+budwiser:
+  app:
+    frontend-url: ${FRONTEND_URL:http://localhost:3000}
+    # Business timezone: defines "today" / "this month" for budgets, goals and date validation.
+    zone: ${APP_ZONE:Asia/Kolkata}
+  security:
+    jwt:
+      issuer: budwiser
+      access-token-ttl: 15m
+      refresh-token-ttl: 30d
+      private-key: ${JWT_PRIVATE_KEY:}
+      public-key: ${JWT_PUBLIC_KEY:}
+      generate-dev-keys: false
+    cookie:
+      secure: ${AUTH_COOKIE_SECURE:true}
+
+  rate-limit:
+    agent:
+      capacity: 10
+      period: 1m
+    auth:
+      capacity: 10
+      period: 1m
+  llm:
+    timeout: 30s
+    max-tokens: 1024
+    temperature: 0.2
+    # After 3 consecutive failures a provider is skipped for 60s, then one trial request is allowed.
+    circuit-breaker:
+      failure-threshold: 3
+      open-duration: 60s
+    # Tried in order; a provider with no API key is skipped. Both speak the OpenAI chat-completions API.
+    providers:
+      - name: groq
+        base-url: https://api.groq.com/openai/v1
+        model: ${GROQ_MODEL:llama-3.3-70b-versatile}
+        api-key: ${GROQ_API_KEY:}
+      - name: huggingface
+        base-url: https://router.huggingface.co/v1
+        model: ${HF_MODEL:meta-llama/Llama-3.3-70B-Instruct}
+        api-key: ${HF_TOKEN:}
+
+logging:
+  pattern:
+    level: "%5p [req:%X{requestId:-}] [user:%X{userId:-}]"
