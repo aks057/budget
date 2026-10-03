@@ -1,4 +1,9 @@
 # Local development (default profile). Never used in production.
+spring:
+  config:
+    # Local secrets (GROQ_API_KEY, HF_TOKEN, ...) from the repo-root .env; optional, and dev profile only.
+    # bootRun runs from backend/, so ../.env is the repo root. [.properties] makes Spring parse KEY=value lines.
+    import: optional:file:../.env[.properties]
 budwiser:
   security:
     jwt:

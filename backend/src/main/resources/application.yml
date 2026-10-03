@@ -72,7 +72,8 @@ budwiser:
     providers:
       - name: groq
         base-url: https://api.groq.com/openai/v1
-        model: ${GROQ_MODEL:llama-3.3-70b-versatile}
+        # Groq retires models; check GET https://api.groq.com/openai/v1/models and override with GROQ_MODEL.
+        model: ${GROQ_MODEL:openai/gpt-oss-120b}
         api-key: ${GROQ_API_KEY:}
       - name: huggingface
         base-url: https://router.huggingface.co/v1
