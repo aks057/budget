@@ -1,4 +1,7 @@
 budwiser:
+  # No background scheduler in tests; InsightIT invokes the job directly.
+  insights:
+    enabled: false
   security:
     jwt:
       generate-dev-keys: true

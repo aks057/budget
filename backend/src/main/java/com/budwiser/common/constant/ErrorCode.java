@@ -43,6 +43,8 @@ public enum ErrorCode {
   ACTION_ALREADY_PROCESSED("BW-5004", "This action was already confirmed, cancelled or expired"),
   ACTION_EXPIRED("BW-5005", "This action expired, please ask the assistant again"),
 
+  INSIGHT_NOT_FOUND("BW-6001", "Insight not found"),
+
   VALIDATION_FAILED("BW-9001", "Validation failed"),
   MALFORMED_REQUEST("BW-9002", "Malformed request"),
   CONCURRENT_MODIFICATION("BW-9003", "The resource was modified concurrently, please retry"),

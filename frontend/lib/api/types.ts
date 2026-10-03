@@ -154,6 +154,28 @@ export interface GoalDto {
   overdue: boolean;
 }
 
+// ---------- Insights ----------
+
+export type InsightType =
+  | "BUDGET_WARNING"
+  | "BUDGET_EXCEEDED"
+  | "SPENDING_SPIKE"
+  | "LARGE_TRANSACTION"
+  | "BILL_DUE"
+  | "GOAL_BEHIND"
+  | "GOAL_OVERDUE"
+  | "GOAL_ACHIEVED";
+
+export interface InsightDto {
+  id: string;
+  type: InsightType;
+  severity: AnomalySeverity;
+  title: string;
+  body: string;
+  read: boolean;
+  createdAt: number; // epoch millis
+}
+
 // ---------- Agent ----------
 
 export type ToolStatus = "SUCCESS" | "REJECTED" | "ERROR" | "PENDING_CONFIRMATION";

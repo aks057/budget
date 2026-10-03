@@ -38,6 +38,10 @@ budwiser:
     frontend-url: ${FRONTEND_URL:http://localhost:3000}
     # Business timezone: defines "today" / "this month" for budgets, goals and date validation.
     zone: ${APP_ZONE:Asia/Kolkata}
+  insights:
+    # Daily proactive-insights job (cron is evaluated in budwiser.app.zone).
+    enabled: ${INSIGHTS_ENABLED:true}
+    cron: ${INSIGHTS_CRON:0 0 8 * * *}
   security:
     jwt:
       issuer: budwiser

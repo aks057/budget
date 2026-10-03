@@ -12,4 +12,5 @@ public final class TableName {
   public static final String AGENT_CONVERSATIONS = "agent_conversations";
   public static final String AGENT_MESSAGES = "agent_messages";
   public static final String AGENT_ACTIONS = "agent_actions";
+  public static final String INSIGHTS = "insights";
 }

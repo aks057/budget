@@ -8,6 +8,7 @@ import {
   Sparkles,
   PiggyBank,
   Target,
+  BellRing,
   ArrowLeftRight,
   Settings,
   User,
@@ -202,6 +203,10 @@ export function CommandMenu() {
             <CommandItem onSelect={() => navigateTo("/goals", "Goals", "goals")}>
               <Target className="mr-2 h-4 w-4" />
               Goals
+            </CommandItem>
+            <CommandItem onSelect={() => navigateTo("/insights", "Insights", "insights")}>
+              <BellRing className="mr-2 h-4 w-4" />
+              Insights
             </CommandItem>
             <CommandItem
               onSelect={() => navigateTo("/manage", "Manage", "manage")}
